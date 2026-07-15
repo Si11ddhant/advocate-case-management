@@ -149,82 +149,84 @@ export const Billing: React.FC = () => {
               <p className="text-xs text-muted-foreground/80 mt-1">Log fees inside client case sheets to populate this ledger.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Case Matter</TableHead>
-                  <TableHead>Item / Fee Description</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map(inv => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-mono font-bold text-xs uppercase">{inv.invoice_number}</TableCell>
-                    <TableCell className="font-semibold text-foreground">{inv.client?.name}</TableCell>
-                    <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate" title={inv.case?.case_title}>
-                      {inv.case?.case_title}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-xs truncate max-w-[200px]" title={inv.title}>
-                      {inv.title}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{inv.due_date || 'N/A'}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          inv.status === 'Paid'
-                            ? 'success'
-                            : inv.status === 'Unpaid'
-                            ? 'warning'
-                            : 'error'
-                        }
-                      >
-                        {inv.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-bold text-foreground">
-                      ${Number(inv.amount).toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-right flex items-center justify-end space-x-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPreviewInvoice(inv)}
-                        className="h-8 text-xs flex items-center space-x-1 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
-                      >
-                        <Receipt size={13} />
-                        <span>Invoice</span>
-                      </Button>
-                      
-                      {inv.status !== 'Paid' ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleUpdateStatus(inv.id, 'Paid')}
-                          className="h-8 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/5"
-                        >
-                          Mark Paid
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleUpdateStatus(inv.id, 'Unpaid')}
-                          className="h-8 text-xs text-muted-foreground hover:bg-muted"
-                        >
-                          Mark Unpaid
-                        </Button>
-                      )}
-                    </TableCell>
+            <div className="w-full overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice #</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Case Matter</TableHead>
+                    <TableHead>Item / Fee Description</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map(inv => (
+                    <TableRow key={inv.id}>
+                      <TableCell className="font-mono font-bold text-xs uppercase">{inv.invoice_number}</TableCell>
+                      <TableCell className="font-semibold text-foreground">{inv.client?.name}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs max-w-[150px] truncate" title={inv.case?.case_title}>
+                        {inv.case?.case_title}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-xs truncate max-w-[200px]" title={inv.title}>
+                        {inv.title}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{inv.due_date || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            inv.status === 'Paid'
+                              ? 'success'
+                              : inv.status === 'Unpaid'
+                              ? 'warning'
+                              : 'error'
+                          }
+                        >
+                          {inv.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-foreground">
+                        ${Number(inv.amount).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right flex items-center justify-end space-x-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPreviewInvoice(inv)}
+                          className="h-8 text-xs flex items-center space-x-1 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
+                        >
+                          <Receipt size={13} />
+                          <span>Invoice</span>
+                        </Button>
+                        
+                        {inv.status !== 'Paid' ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUpdateStatus(inv.id, 'Paid')}
+                            className="h-8 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/5"
+                          >
+                            Mark Paid
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUpdateStatus(inv.id, 'Unpaid')}
+                            className="h-8 text-xs text-muted-foreground hover:bg-muted"
+                          >
+                            Mark Unpaid
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

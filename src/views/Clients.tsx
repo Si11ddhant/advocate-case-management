@@ -200,69 +200,71 @@ export const Clients: React.FC = () => {
               <p className="text-xs text-muted-foreground/80 mt-1">Add a new client to begin establishing dockets.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Client Name</TableHead>
-                  <TableHead>Email Address</TableHead>
-                  <TableHead>Phone Number</TableHead>
-                  <TableHead>Office/Residence Address</TableHead>
-                  <TableHead>Date Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClients.map(c => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-bold text-foreground">{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground flex items-center space-x-1.5">
-                      {c.email ? (
-                        <>
-                          <Mail size={14} className="text-muted-foreground/60" />
-                          <span>{c.email}</span>
-                        </>
-                      ) : (
-                        <span className="italic text-muted-foreground/40 text-xs">Not provided</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {c.phone ? (
-                        <div className="flex items-center space-x-1.5">
-                          <Phone size={14} className="text-muted-foreground/60" />
-                          <span>{c.phone}</span>
-                        </div>
-                      ) : (
-                        <span className="italic text-muted-foreground/40 text-xs">Not provided</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground max-w-[200px] truncate">
-                      {c.address ? (
-                        <div className="flex items-center space-x-1.5 truncate">
-                          <MapPin size={14} className="text-muted-foreground/60 flex-shrink-0" />
-                          <span className="truncate" title={c.address}>{c.address}</span>
-                        </div>
-                      ) : (
-                        <span className="italic text-muted-foreground/40 text-xs">Not provided</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {new Date(c.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenCaseModal(c)}
-                        className="h-8 text-xs flex items-center space-x-1.5 ml-auto border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
-                      >
-                        <FolderPlus size={13} />
-                        <span>Add Case</span>
-                      </Button>
-                    </TableCell>
+            <div className="w-full overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Client Name</TableHead>
+                    <TableHead>Email Address</TableHead>
+                    <TableHead>Phone Number</TableHead>
+                    <TableHead>Office/Residence Address</TableHead>
+                    <TableHead>Date Added</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map(c => (
+                    <TableRow key={c.id}>
+                      <TableCell className="font-bold text-foreground">{c.name}</TableCell>
+                      <TableCell className="text-muted-foreground flex items-center space-x-1.5">
+                        {c.email ? (
+                          <>
+                            <Mail size={14} className="text-muted-foreground/60" />
+                            <span>{c.email}</span>
+                          </>
+                        ) : (
+                          <span className="italic text-muted-foreground/40 text-xs">Not provided</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {c.phone ? (
+                          <div className="flex items-center space-x-1.5">
+                            <Phone size={14} className="text-muted-foreground/60" />
+                            <span>{c.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="italic text-muted-foreground/40 text-xs">Not provided</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                        {c.address ? (
+                          <div className="flex items-center space-x-1.5 truncate">
+                            <MapPin size={14} className="text-muted-foreground/60 flex-shrink-0" />
+                            <span className="truncate" title={c.address}>{c.address}</span>
+                          </div>
+                        ) : (
+                          <span className="italic text-muted-foreground/40 text-xs">Not provided</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {new Date(c.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenCaseModal(c)}
+                          className="h-8 text-xs flex items-center space-x-1.5 ml-auto border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
+                        >
+                          <FolderPlus size={13} />
+                          <span>Add Case</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

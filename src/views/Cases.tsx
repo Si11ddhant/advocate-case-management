@@ -305,7 +305,8 @@ export const Cases: React.FC = () => {
           ) : viewMode === 'list' ? (
             /* LIST VIEW MODE */
             <div className="overflow-visible bg-card border border-border rounded-xl p-4">
-              <Table className="overflow-visible">
+              <div className="w-full overflow-x-auto">
+                <Table className="overflow-visible">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Case Title</TableHead>
@@ -432,6 +433,7 @@ export const Cases: React.FC = () => {
                 </TableBody>
               </Table>
             </div>
+          </div>
           ) : (
             /* KANBAN BOARD VIEW MODE */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">

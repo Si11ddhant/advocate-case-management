@@ -3,12 +3,13 @@ import { Sidebar } from './Sidebar';
 import { useToast } from '../context/ToastContext';
 import { db } from '../lib/db';
 import { CommandPalette } from './CommandPalette';
-import { Search } from 'lucide-react';
+import { Search, Menu } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
   const hasChecked = useRef(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     // Run this check once on mount (login session starts)
@@ -65,33 +66,52 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   }, []);
 
   return (
-    <div className="flex bg-background text-foreground min-h-screen">
-      {/* Permanent sidebar layout */}
-      <Sidebar />
+    <div className="flex bg-background text-foreground min-h-screen relative">
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+        />
+      )}
+
+      {/* Permanent & Mobile Drawer Sidebar */}
+      <Sidebar isMobileOpen={isMobileSidebarOpen} onClose={() => setIsMobileSidebarOpen(false)} />
 
       {/* Primary view content workspace */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Top Header Navigation Search Area */}
-        <header className="border-b border-border bg-card/65 backdrop-blur-md px-8 py-3 flex items-center justify-between z-10 flex-shrink-0">
-          <button
-            onClick={() => setIsPaletteOpen(true)}
-            className="flex items-center justify-between text-xs font-semibold text-muted-foreground bg-background hover:bg-muted/50 border border-border rounded-lg px-3 py-2 w-64 transition-all text-left shadow-sm focus:outline-none"
-          >
-            <div className="flex items-center space-x-2">
-              <Search size={14} className="text-muted-foreground/75" />
-              <span>Search or execute Ctrl+K...</span>
-            </div>
-            <kbd className="h-4 select-none items-center gap-0.5 rounded border border-border bg-muted px-1 font-mono text-[9px] font-medium text-muted-foreground">
-              Ctrl+K
-            </kbd>
-          </button>
+        <header className="border-b border-border bg-card/65 backdrop-blur-md px-4 sm:px-8 py-3 flex items-center justify-between z-10 flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            {/* Mobile Hamburger Menu Toggle Button */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden block p-2 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors focus:outline-none"
+              title="Open Navigation"
+            >
+              <Menu size={20} />
+            </button>
+
+            <button
+              onClick={() => setIsPaletteOpen(true)}
+              className="flex items-center justify-between text-xs font-semibold text-muted-foreground bg-background hover:bg-muted/50 border border-border rounded-lg px-3 py-2 w-48 sm:w-64 transition-all text-left shadow-sm focus:outline-none"
+            >
+              <div className="flex items-center space-x-2">
+                <Search size={14} className="text-muted-foreground/75" />
+                <span>Search or Ctrl+K...</span>
+              </div>
+              <kbd className="h-4 select-none items-center gap-0.5 rounded border border-border bg-muted px-1 font-mono text-[9px] font-medium text-muted-foreground hidden sm:inline-flex">
+                Ctrl+K
+              </kbd>
+            </button>
+          </div>
           
-          <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">
+          <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest hidden sm:block">
             Advocate Portal v1.0
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-8 bg-background scrollbar-hide">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 bg-background scrollbar-hide">
           <div className="max-w-7xl mx-auto space-y-6">
             {children}
           </div>
