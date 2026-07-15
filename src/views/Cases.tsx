@@ -324,7 +324,7 @@ export const Cases: React.FC = () => {
                       <TableRow 
                         key={c.id} 
                         className="relative overflow-visible group cursor-pointer hover:bg-muted/10 transition-colors"
-                        onClick={() => setActiveMenuId(activeMenuId === c.id ? null : c.id)}
+                        onClick={() => navigate(`/case/${c.id}`)}
                       >
                         <TableCell className="font-bold text-foreground">
                           <span className="text-primary/95 hover:underline transition-colors">
