@@ -478,7 +478,7 @@ export const Dashboard: React.FC = () => {
           <CardContent className="flex-1 flex flex-col justify-between py-4 text-left">
             <div className="space-y-1">
               <div className="text-3xl font-black text-foreground">
-                ${totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
               <div className="flex items-center text-xs text-emerald-600 font-bold">
                 <span>↑ 21% vs last month</span>
@@ -512,7 +512,7 @@ export const Dashboard: React.FC = () => {
 
               {/* Dynamic Floating Tooltip */}
               <div className="absolute top-2 right-12 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded shadow-md pointer-events-none">
-                ${(totalCollected * 0.78).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                ₹{(totalCollected * 0.78).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
               </div>
             </div>
           </CardContent>

@@ -330,7 +330,7 @@ export const CaseDetail: React.FC = () => {
       // Auto post a note to the timeline
       await db.createUpdate({
         case_id: id,
-        update_text: `System: Logged case expense (${expCategory}) - "${expTitle.trim()}" for $${parseFloat(expAmount).toFixed(2)}.`,
+        update_text: `System: Logged case expense (${expCategory}) - "${expTitle.trim()}" for ₹${parseFloat(expAmount).toFixed(2)}.`,
         added_by: user?.email || 'System'
       });
       
@@ -802,7 +802,7 @@ export const CaseDetail: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        Amount ($) <span className="text-rose-500">*</span>
+                        Amount (₹) <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -866,13 +866,13 @@ export const CaseDetail: React.FC = () => {
                   <div className="px-3 py-1.5 bg-muted/60 border border-border rounded-lg text-center min-w-[70px]">
                     <span className="block text-[9px] font-bold text-muted-foreground uppercase">Unbilled</span>
                     <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 font-mono">
-                      ${expenses.filter(e => e.status === 'Unbilled').reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
+                      ₹{expenses.filter(e => e.status === 'Unbilled').reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
                     </span>
                   </div>
                   <div className="px-3 py-1.5 bg-muted/60 border border-border rounded-lg text-center min-w-[70px]">
                     <span className="block text-[9px] font-bold text-muted-foreground uppercase">Billed</span>
                     <span className="text-xs font-extrabold text-foreground font-mono">
-                      ${expenses.filter(e => e.status === 'Billed').reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
+                      ₹{expenses.filter(e => e.status === 'Billed').reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -913,7 +913,7 @@ export const CaseDetail: React.FC = () => {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right font-black text-foreground font-mono text-xs">
-                              ${exp.amount.toFixed(2)}
+                              ₹{exp.amount.toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button
@@ -1017,7 +1017,7 @@ export const CaseDetail: React.FC = () => {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex justify-between font-bold text-foreground">
                                     <span className="truncate max-w-[120px]">{exp.title}</span>
-                                    <span className="font-mono text-right font-black text-[10px]">${exp.amount.toFixed(2)}</span>
+                                    <span className="font-mono text-right font-black text-[10px]">₹{exp.amount.toFixed(2)}</span>
                                   </div>
                                   <span className="text-[10px] text-muted-foreground font-semibold uppercase">{exp.category} • {exp.date}</span>
                                 </div>
@@ -1033,16 +1033,16 @@ export const CaseDetail: React.FC = () => {
                     <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs space-y-1">
                       <div className="flex justify-between font-medium">
                         <span>Base Fee:</span>
-                        <span className="font-mono">${(parseFloat(invAmount) || 0).toFixed(2)}</span>
+                        <span className="font-mono">₹{(parseFloat(invAmount) || 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between font-medium text-amber-600 dark:text-amber-400">
                         <span>Disbursements ({selectedExpenseIds.length} items):</span>
-                        <span className="font-mono">+${expenses.filter(e => selectedExpenseIds.includes(e.id)).reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</span>
+                        <span className="font-mono">+₹{expenses.filter(e => selectedExpenseIds.includes(e.id)).reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between font-black text-foreground border-t border-border pt-1.5 mt-1 text-sm">
                         <span>Total Invoiced Sum:</span>
                         <span className="font-mono text-primary font-bold">
-                          ${((parseFloat(invAmount) || 0) + expenses.filter(e => selectedExpenseIds.includes(e.id)).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
+                          ₹{((parseFloat(invAmount) || 0) + expenses.filter(e => selectedExpenseIds.includes(e.id)).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -1093,7 +1093,7 @@ export const CaseDetail: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <span className="font-black text-sm text-foreground">${Number(inv.amount).toFixed(2)}</span>
+                        <span className="font-black text-sm text-foreground">₹{Number(inv.amount).toFixed(2)}</span>
                         <div className="flex space-x-1">
                           <Button
                             variant="ghost"
@@ -1457,7 +1457,7 @@ export const CaseDetail: React.FC = () => {
                   </td>
                   <td className="py-3.5 text-right text-slate-500">1.0</td>
                   <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
-                    ${(Number(activeInvoice.amount) - expenses.filter(e => e.invoice_id === activeInvoice.id).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
+                    ₹{(Number(activeInvoice.amount) - expenses.filter(e => e.invoice_id === activeInvoice.id).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
                   </td>
                 </tr>
                 {expenses
@@ -1469,7 +1469,7 @@ export const CaseDetail: React.FC = () => {
                         <p className="text-slate-500 text-[10px] mt-0.5">{exp.category} Disbursement ({exp.date})</p>
                       </td>
                       <td className="py-3.5 text-right text-slate-500">1.0</td>
-                      <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">${exp.amount.toFixed(2)}</td>
+                      <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">₹{exp.amount.toFixed(2)}</td>
                     </tr>
                   ))}
               </tbody>
@@ -1480,15 +1480,15 @@ export const CaseDetail: React.FC = () => {
               <div className="w-64 text-xs space-y-2">
                 <div className="flex justify-between text-slate-500 font-medium">
                   <span>Subtotal:</span>
-                  <span>${Number(activeInvoice.amount).toFixed(2)}</span>
+                  <span>₹{Number(activeInvoice.amount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500 font-medium">
                   <span>Sales Tax (0%):</span>
-                  <span>$0.00</span>
+                  <span>₹0.00</span>
                 </div>
                 <div className="flex justify-between text-base font-black border-t border-slate-200 dark:border-slate-800 pt-2 text-slate-900 dark:text-slate-100">
                   <span>Total Amount Due:</span>
-                  <span>${Number(activeInvoice.amount).toFixed(2)}</span>
+                  <span>₹{Number(activeInvoice.amount).toFixed(2)}</span>
                 </div>
               </div>
             </div>

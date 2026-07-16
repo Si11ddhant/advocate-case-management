@@ -105,7 +105,7 @@ export const Billing: React.FC = () => {
           </CardHeader>
           <CardContent className="text-left">
             <div className="text-3xl font-black text-foreground">
-              ${totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹{totalCollected.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="flex items-center text-xs text-muted-foreground mt-1">
               <span>Cleared and recorded payments</span>
@@ -122,7 +122,7 @@ export const Billing: React.FC = () => {
           </CardHeader>
           <CardContent className="text-left">
             <div className="text-3xl font-black text-foreground">
-              ${totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹{totalOutstanding.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="flex items-center text-xs text-muted-foreground mt-1">
               <span>Unpaid and overdue legal balances</span>
@@ -139,7 +139,7 @@ export const Billing: React.FC = () => {
           </CardHeader>
           <CardContent className="text-left">
             <div className="text-3xl font-black text-foreground">
-              ${totalInvoiced.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹{totalInvoiced.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
             <div className="flex items-center text-xs text-muted-foreground mt-1">
               <span>All logged charges on record</span>
@@ -206,7 +206,7 @@ export const Billing: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-bold text-foreground">
-                        ${Number(inv.amount).toFixed(2)}
+                        ₹{Number(inv.amount).toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right flex items-center justify-end space-x-1.5">
                         <Button
@@ -362,7 +362,7 @@ export const Billing: React.FC = () => {
                   </td>
                   <td className="py-3.5 text-right text-slate-500">1.0</td>
                   <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100 font-mono">
-                    ${(Number(previewInvoice.amount) - previewExpenses.filter(e => e.invoice_id === previewInvoice.id).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
+                    ₹{(Number(previewInvoice.amount) - previewExpenses.filter(e => e.invoice_id === previewInvoice.id).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
                   </td>
                 </tr>
                 {previewExpenses
@@ -374,7 +374,7 @@ export const Billing: React.FC = () => {
                         <p className="text-slate-500 text-[10px] mt-0.5">{exp.category} Disbursement ({exp.date})</p>
                       </td>
                       <td className="py-3.5 text-right text-slate-500">1.0</td>
-                      <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100 font-mono">${exp.amount.toFixed(2)}</td>
+                      <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100 font-mono">₹{exp.amount.toFixed(2)}</td>
                     </tr>
                   ))}
               </tbody>
@@ -385,15 +385,15 @@ export const Billing: React.FC = () => {
               <div className="w-64 text-xs space-y-2">
                 <div className="flex justify-between text-slate-500 font-medium">
                   <span>Subtotal:</span>
-                  <span>${Number(previewInvoice.amount).toFixed(2)}</span>
+                  <span>₹{Number(previewInvoice.amount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-slate-500 font-medium">
                   <span>Sales Tax (0%):</span>
-                  <span>$0.00</span>
+                  <span>₹0.00</span>
                 </div>
                 <div className="flex justify-between text-base font-black border-t border-slate-200 dark:border-slate-800 pt-2 text-slate-900 dark:text-slate-100">
                   <span>Total Amount Due:</span>
-                  <span>${Number(previewInvoice.amount).toFixed(2)}</span>
+                  <span>₹{Number(previewInvoice.amount).toFixed(2)}</span>
                 </div>
               </div>
             </div>
