@@ -76,26 +76,26 @@ const getRelativeDate = (offsetDays: number) => {
 const MOCK_CLIENTS: Client[] = [
   {
     id: 'c1-uuid',
-    name: 'Harvey Specter',
-    phone: '+1 (555) 019-2831',
-    email: 'harvey@specterlaw.com',
-    address: '601 Lexington Ave, New York, NY 10022',
+    name: 'Tata Consultancy Services',
+    phone: '+91 22 6778 9999',
+    email: 'legal@tcs.com',
+    address: 'TCS House, Raveline Street, Fort, Mumbai, Maharashtra 400001',
     created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
   },
   {
     id: 'c2-uuid',
-    name: 'Louis Litt',
-    phone: '+1 (555) 014-9844',
-    email: 'louis@littcorp.com',
-    address: '885 Third Avenue, New York, NY 10022',
+    name: 'Reliance Industries Ltd',
+    phone: '+91 22 2278 5000',
+    email: 'compliance@ril.com',
+    address: 'Maker Chambers IV, Nariman Point, Mumbai, Maharashtra 400021',
     created_at: new Date(Date.now() - 25 * 86400000).toISOString(),
   },
   {
     id: 'c3-uuid',
-    name: 'Jessica Pearson',
-    phone: '+1 (555) 012-4433',
-    email: 'jessica@pearson-co.com',
-    address: 'Chamberlain Square, Chicago, IL 60601',
+    name: 'State of Kerala Legal Cell',
+    phone: '+91 471 232 4433',
+    email: 'advocate.general@kerala.gov.in',
+    address: 'Advocate General Office, Ernakulam, Kochi, Kerala 682031',
     created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
   }
 ];
@@ -104,45 +104,45 @@ const MOCK_CASES: Case[] = [
   {
     id: 'case1-uuid',
     client_id: 'c1-uuid',
-    case_title: 'Pearson Specter vs. Hardman Corp',
-    court_name: 'Southern District Court of New York',
-    case_number: 'SDNY-2026-CV-8891',
+    case_title: 'Kesavananda Bharati v. State of Kerala',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Civil) 135/1970',
     status: 'Active',
     next_hearing_date: getRelativeDate(1), // Tomorrow!
-    description: 'Corporate embezzlement and contract breach case. The defense is seeking dismissal based on standing claims.',
+    description: 'Landmark constitutional case regarding the power of Parliament to amend the Constitution. Reviewing the Basic Structure Doctrine.',
     created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
   },
   {
     id: 'case2-uuid',
     client_id: 'c2-uuid',
-    case_title: 'State of New York vs. James Cooper',
-    court_name: 'New York Supreme Court',
-    case_number: 'NYS-2026-CR-0412',
+    case_title: 'Maneka Gandhi v. Union of India',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Civil) 112/1977',
     status: 'Delayed',
     next_hearing_date: getRelativeDate(2), // Inside 48 hours alert!
-    description: 'Defense representation for financial misdemeanor charges. Hearing delayed due to prosecutorial document request delays.',
+    description: 'Challenge to personal liberty and arbitrary administrative action regarding passport confiscation under Article 21.',
     created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
   },
   {
     id: 'case3-uuid',
     client_id: 'c3-uuid',
-    case_title: 'Acme Corp Merger Antitrust Dispute',
-    court_name: 'Federal Trade Commission Appeals Court',
-    case_number: 'FTC-2025-ANT-1090',
+    case_title: 'Shayara Bano v. Union of India (Triple Talaq Case)',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Civil) 118/2016',
     status: 'Completed',
     next_hearing_date: getRelativeDate(-5),
-    description: 'Represented Acme Corp against antitrust violation complaints. Achieved final approval with structural remedies.',
+    description: 'Constitutional challenge regarding validity of Talaq-e-Biddat (Triple Talaq). Disposed following final judgment declaring it unconstitutional.',
     created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
   },
   {
     id: 'case4-uuid',
     client_id: 'c1-uuid',
-    case_title: 'Hedge Fund Class Action Settlement',
-    court_name: 'Delaware Court of Chancery',
-    case_number: 'DCC-2026-CA-7734',
+    case_title: 'Navtej Singh Johar v. Union of India',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Criminal) 76/2016',
     status: 'Cancelled',
     next_hearing_date: '',
-    description: 'Shareholder class action relating to portfolio management fees. Settled out of court, leading to case dismissal.',
+    description: 'Petition challenging Section 377 of the Indian Penal Code. Closed following historical decriminalization of consensual relationships.',
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
   }
 ];
@@ -151,21 +151,21 @@ const MOCK_UPDATES: CaseUpdate[] = [
   {
     id: 'up1',
     case_id: 'case1-uuid',
-    update_text: 'Filed response to defendant motion for summary dismissal.',
+    update_text: 'Filed rejoinder affidavit in response to Kerala State Government counter-affidavit.',
     added_by: 'advocate@example.com',
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
   },
   {
     id: 'up2',
     case_id: 'case1-uuid',
-    update_text: 'Obtained deposition affidavits from primary audit executives.',
+    update_text: 'Compiled written arguments regarding the limitations of amending power under Article 368.',
     added_by: 'advocate@example.com',
     created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
   },
   {
     id: 'up3',
     case_id: 'case2-uuid',
-    update_text: 'Hearing rescheduled to 48 hours from now due to witness unavailability.',
+    update_text: 'Constitutional bench hearing adjourned due to senior counsel schedule overlap.',
     added_by: 'advocate@example.com',
     created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
   }
@@ -204,8 +204,8 @@ const MOCK_INVOICES: Invoice[] = [
     case_id: 'case1-uuid',
     client_id: 'c1-uuid',
     invoice_number: 'INV-2026-001',
-    title: 'Retainer Fee - Hardman Litigation Support',
-    amount: 5000.00,
+    title: 'Retainer Fee - Kesavananda Constitutional Briefs Support',
+    amount: 50000.00,
     status: 'Paid',
     due_date: getRelativeDate(-10),
     created_at: new Date(Date.now() - 15 * 86400000).toISOString()
@@ -215,8 +215,8 @@ const MOCK_INVOICES: Invoice[] = [
     case_id: 'case1-uuid',
     client_id: 'c1-uuid',
     invoice_number: 'INV-2026-002',
-    title: 'Evidentiary Exhibit Deposition Fees',
-    amount: 1250.00,
+    title: 'Senior Advocate Counsel Consultation Fees',
+    amount: 15000.00,
     status: 'Unpaid',
     due_date: getRelativeDate(5),
     created_at: new Date(Date.now() - 3 * 86400000).toISOString()
@@ -226,8 +226,8 @@ const MOCK_INVOICES: Invoice[] = [
     case_id: 'case2-uuid',
     client_id: 'c2-uuid',
     invoice_number: 'INV-2026-003',
-    title: 'Court Appearance - Pleading Motion Representation',
-    amount: 850.00,
+    title: 'Court Appearance - Pleading Writ Representation',
+    amount: 25000.00,
     status: 'Unpaid',
     due_date: getRelativeDate(-2),
     created_at: new Date(Date.now() - 6 * 86400000).toISOString()
@@ -239,8 +239,8 @@ const MOCK_EXPENSES: Expense[] = [
     id: 'exp1',
     case_id: 'case1-uuid',
     client_id: 'c1-uuid',
-    title: 'Filing fees for summary motion',
-    amount: 350.00,
+    title: 'Filing fees for constitutional writ petition',
+    amount: 3500.00,
     category: 'Court Fees',
     date: getRelativeDate(-8),
     status: 'Unbilled',
@@ -250,8 +250,8 @@ const MOCK_EXPENSES: Expense[] = [
     id: 'exp2',
     case_id: 'case1-uuid',
     client_id: 'c1-uuid',
-    title: 'Travel reimbursement - Newark Court appearance',
-    amount: 75.00,
+    title: 'Travel reimbursement - New Delhi Supreme Court',
+    amount: 4500.00,
     category: 'Travel',
     date: getRelativeDate(-4),
     status: 'Unbilled',
@@ -261,8 +261,8 @@ const MOCK_EXPENSES: Expense[] = [
     id: 'exp3',
     case_id: 'case2-uuid',
     client_id: 'c2-uuid',
-    title: 'Certified deposition copy printing charges',
-    amount: 120.00,
+    title: 'Certified copy translation charges',
+    amount: 1200.00,
     category: 'Photocopies',
     date: getRelativeDate(-5),
     status: 'Unbilled',
@@ -272,23 +272,15 @@ const MOCK_EXPENSES: Expense[] = [
 
 // Helper to seed localStorage mock data
 const initLocalStorage = () => {
-  if (!localStorage.getItem('adv_clients')) {
+  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v3');
+  if (needsSeeding) {
     localStorage.setItem('adv_clients', JSON.stringify(MOCK_CLIENTS));
-  }
-  if (!localStorage.getItem('adv_cases')) {
     localStorage.setItem('adv_cases', JSON.stringify(MOCK_CASES));
-  }
-  if (!localStorage.getItem('adv_updates')) {
     localStorage.setItem('adv_updates', JSON.stringify(MOCK_UPDATES));
-  }
-  if (!localStorage.getItem('adv_documents')) {
     localStorage.setItem('adv_documents', JSON.stringify(MOCK_DOCUMENTS));
-  }
-  if (!localStorage.getItem('adv_invoices')) {
     localStorage.setItem('adv_invoices', JSON.stringify(MOCK_INVOICES));
-  }
-  if (!localStorage.getItem('adv_expenses')) {
     localStorage.setItem('adv_expenses', JSON.stringify(MOCK_EXPENSES));
+    localStorage.setItem('adv_seeded_indian_v3', 'true');
   }
 };
 
