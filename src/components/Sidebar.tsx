@@ -25,7 +25,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
   const { user, signOut, isMock } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const activeCollapsed = isCollapsed && !isHovered;
 
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -47,8 +50,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
 
   return (
     <aside 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={`${
-        isCollapsed ? 'md:w-20 w-64' : 'w-64'
+        activeCollapsed ? 'md:w-20 w-64' : 'w-64'
       } border-r border-border/40 bg-gradient-to-b from-card via-card/98 to-card/95 flex flex-col h-screen fixed md:sticky inset-y-0 left-0 z-50 shadow-2xl shadow-primary/5 transition-all duration-300 ease-in-out md:translate-x-0 ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
@@ -56,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
       {/* Brand Header */}
       <div 
         className={`p-4 flex ${
-          isCollapsed ? 'md:flex-col items-center md:space-y-4' : 'items-center justify-between'
+          activeCollapsed ? 'md:flex-col items-center md:space-y-4' : 'items-center justify-between'
         } border-b border-border/40 transition-all duration-300`}
       >
         <div className="flex items-center space-x-3">
@@ -68,7 +73,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
               </span>
             )}
           </div>
-          {(!isCollapsed || isMobileOpen) && (
+          {(!activeCollapsed || isMobileOpen) && (
             <div className="text-left animate-in fade-in duration-200">
               <h1 className="font-extrabold text-sm tracking-tight leading-none text-foreground">Advocate ERP</h1>
               <span className="text-[8px] text-muted-foreground uppercase tracking-widest font-black mt-1 block">Case Manager</span>
@@ -86,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="md:block hidden p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all focus:outline-none border border-border/10"
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          title={isCollapsed ? "Lock Sidebar Open" : "Unlock Sidebar to Auto-Collapse"}
         >
           {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
         </button>
@@ -108,10 +113,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
             key={item.path}
             to={item.path}
             onClick={() => onClose?.()}
-            title={isCollapsed ? item.name : undefined}
+            title={activeCollapsed ? item.name : undefined}
             className={({ isActive }) =>
               `flex items-center ${
-                isCollapsed ? 'justify-center' : 'space-x-3 px-3'
+                activeCollapsed ? 'justify-center' : 'space-x-3 px-3'
               } py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 border border-primary/20 scale-[1.02]'
@@ -120,14 +125,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
             }
           >
             <item.icon size={18} className="flex-shrink-0" />
-            {(!isCollapsed || isMobileOpen) && <span className="animate-in fade-in duration-200">{item.name}</span>}
+            {(!activeCollapsed || isMobileOpen) && <span className="animate-in fade-in duration-200">{item.name}</span>}
           </NavLink>
         ))}
       </nav>
  
       {/* Footer Area */}
       <div className="p-4 border-t border-border/40 mt-auto space-y-4">
-        {isCollapsed && !isMobileOpen ? (
+        {activeCollapsed && !isMobileOpen ? (
           /* Collapsed Footer View */
           <div className="flex flex-col items-center space-y-4">
             {/* Avatar Circle */}
