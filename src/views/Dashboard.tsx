@@ -148,7 +148,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Welcome Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 pb-6 border-b border-border/70 text-left">
         <div>
@@ -258,7 +258,7 @@ export const Dashboard: React.FC = () => {
       {/* Metrics Grid */}
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Active Cases */}
-        <Card className="hover:shadow-md transition-all border border-border/80">
+        <Card className="hover:shadow-lg hover:shadow-orange-500/5 hover:border-orange-500/30 transition-all duration-300 border border-border/80">
           <CardContent className="p-6 text-left space-y-3">
             <div className="flex items-center justify-between">
               <div className="bg-orange-500/10 text-orange-600 dark:text-orange-400 p-2.5 rounded-xl">
@@ -280,7 +280,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         {/* Card 2: Completed Cases */}
-        <Card className="hover:shadow-md transition-all border border-border/80">
+        <Card className="hover:shadow-lg hover:shadow-emerald-500/5 hover:border-emerald-500/30 transition-all duration-300 border border-border/80">
           <CardContent className="p-6 text-left space-y-3">
             <div className="flex items-center justify-between">
               <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl">
@@ -302,7 +302,7 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         {/* Card 3: Total Clients */}
-        <Card className="hover:shadow-md transition-all border border-border/80">
+        <Card className="hover:shadow-lg hover:shadow-purple-500/5 hover:border-purple-500/30 transition-all duration-300 border border-border/80">
           <CardContent className="p-6 text-left space-y-3">
             <div className="flex items-center justify-between">
               <div className="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-2.5 rounded-xl">
@@ -323,8 +323,8 @@ export const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Card 4: Tomorrow's Hearings */}
-        <Card className="hover:shadow-md transition-all border border-border/80">
+        {/* Card 4: Tomorrow\'s Hearings */}
+        <Card className="hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-500/30 transition-all duration-300 border border-border/80">
           <CardContent className="p-6 text-left space-y-3">
             <div className="flex items-center justify-between">
               <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-2.5 rounded-xl">

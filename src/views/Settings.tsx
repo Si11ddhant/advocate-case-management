@@ -24,7 +24,7 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
       {/* Header Panel */}
       <div>
         <h1 className="text-3xl font-extrabold tracking-tight">System Settings</h1>
