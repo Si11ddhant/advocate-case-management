@@ -6,6 +6,7 @@ export interface Client {
   phone: string;
   email: string;
   address: string;
+  client_type?: 'Individual' | 'Company' | 'Industrial';
   created_at: string;
 }
 
@@ -76,26 +77,29 @@ const getRelativeDate = (offsetDays: number) => {
 const MOCK_CLIENTS: Client[] = [
   {
     id: 'c1-uuid',
-    name: 'Tata Consultancy Services',
-    phone: '+91 22 6778 9999',
-    email: 'legal@tcs.com',
-    address: 'TCS House, Raveline Street, Fort, Mumbai, Maharashtra 400001',
+    name: 'Individual',
+    phone: '+91 99999 99999',
+    email: 'individual@client.com',
+    address: 'India Representative Address',
+    client_type: 'Individual',
     created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
   },
   {
     id: 'c2-uuid',
-    name: 'Reliance Industries Ltd',
+    name: 'Company',
     phone: '+91 22 2278 5000',
-    email: 'compliance@ril.com',
-    address: 'Maker Chambers IV, Nariman Point, Mumbai, Maharashtra 400021',
+    email: 'company@client.com',
+    address: 'Corporate Headquarters, India',
+    client_type: 'Company',
     created_at: new Date(Date.now() - 25 * 86400000).toISOString(),
   },
   {
     id: 'c3-uuid',
-    name: 'State of Kerala Legal Cell',
-    phone: '+91 471 232 4433',
-    email: 'advocate.general@kerala.gov.in',
-    address: 'Advocate General Office, Ernakulam, Kochi, Kerala 682031',
+    name: 'Industrial',
+    phone: '+91 44 2322 4433',
+    email: 'industrial@client.com',
+    address: 'Industrial Zone Complex, India',
+    client_type: 'Industrial',
     created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
   }
 ];
@@ -272,7 +276,7 @@ const MOCK_EXPENSES: Expense[] = [
 
 // Helper to seed localStorage mock data
 const initLocalStorage = () => {
-  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v3');
+  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v4');
   if (needsSeeding) {
     localStorage.setItem('adv_clients', JSON.stringify(MOCK_CLIENTS));
     localStorage.setItem('adv_cases', JSON.stringify(MOCK_CASES));
@@ -280,7 +284,7 @@ const initLocalStorage = () => {
     localStorage.setItem('adv_documents', JSON.stringify(MOCK_DOCUMENTS));
     localStorage.setItem('adv_invoices', JSON.stringify(MOCK_INVOICES));
     localStorage.setItem('adv_expenses', JSON.stringify(MOCK_EXPENSES));
-    localStorage.setItem('adv_seeded_indian_v3', 'true');
+    localStorage.setItem('adv_seeded_indian_v4', 'true');
   }
 };
 

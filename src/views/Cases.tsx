@@ -604,7 +604,7 @@ export const Cases: React.FC = () => {
                 className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-medium"
               >
                 {clients.map(cl => (
-                  <option key={cl.id} value={cl.id}>{cl.name}</option>
+                  <option key={cl.id} value={cl.id}>{cl.name} {cl.client_type ? `(${cl.client_type})` : ''}</option>
                 ))}
               </select>
             </div>

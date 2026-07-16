@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import { Badge } from '../components/ui/Badge';
 import { useToast } from '../context/ToastContext';
 import { Users, UserPlus, Phone, Mail, MapPin, Search, FolderPlus, Trash2 } from 'lucide-react';
 
@@ -22,6 +23,7 @@ export const Clients: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
+  const [clientType, setClientType] = useState<Client['client_type']>('Individual');
   const [submitting, setSubmitting] = useState(false);
 
   // Toggle for initial case
@@ -75,6 +77,7 @@ export const Clients: React.FC = () => {
     setPhone('');
     setEmail('');
     setAddress('');
+    setClientType('Individual');
     setAddCaseNow(false);
     setCaseTitle('');
     setCourtName('');
@@ -96,7 +99,7 @@ export const Clients: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      const newClient = await db.createClient({ name, phone, email, address });
+      const newClient = await db.createClient({ name, phone, email, address, client_type: clientType });
       
       if (addCaseNow) {
         await db.createCase({
@@ -227,7 +230,16 @@ export const Clients: React.FC = () => {
                 <TableBody>
                   {filteredClients.map(c => (
                     <TableRow key={c.id}>
-                      <TableCell className="font-bold text-foreground">{c.name}</TableCell>
+                      <TableCell className="font-bold text-foreground">
+                        <div className="flex items-center space-x-2">
+                          <span>{c.name}</span>
+                          {c.client_type && (
+                            <Badge variant="outline" className="text-[9px] uppercase font-bold px-1.5 py-0">
+                              {c.client_type}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-muted-foreground flex items-center space-x-1.5">
                         {c.email ? (
                           <>
@@ -318,8 +330,23 @@ export const Clients: React.FC = () => {
               required
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+              className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-foreground"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Client Classification
+            </label>
+            <select
+              value={clientType}
+              onChange={e => setClientType(e.target.value as Client['client_type'])}
+              className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-semibold"
+            >
+              <option value="Individual">Individual</option>
+              <option value="Company">Company</option>
+              <option value="Industrial">Industrial</option>
+            </select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
