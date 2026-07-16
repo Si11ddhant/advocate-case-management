@@ -11,12 +11,10 @@ import {
   LogOut,
   Sun,
   Moon,
-  ShieldAlert,
   ChevronLeft,
   ChevronRight,
   DollarSign
 } from 'lucide-react';
-import { Button } from './ui/Button';
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -51,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
     <aside 
       className={`${
         isCollapsed ? 'md:w-20 w-64' : 'w-64'
-      } border-r border-border bg-card flex flex-col h-screen fixed md:sticky inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out md:translate-x-0 ${
+      } border-r border-border/40 bg-gradient-to-b from-card via-card/98 to-card/95 flex flex-col h-screen fixed md:sticky inset-y-0 left-0 z-50 shadow-2xl shadow-primary/5 transition-all duration-300 ease-in-out md:translate-x-0 ${
         isMobileOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
@@ -59,16 +57,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
       <div 
         className={`p-4 flex ${
           isCollapsed ? 'md:flex-col items-center md:space-y-4' : 'items-center justify-between'
-        } border-b border-border transition-all duration-300`}
+        } border-b border-border/40 transition-all duration-300`}
       >
         <div className="flex items-center space-x-3">
-          <div className="bg-primary p-2 rounded-xl text-primary-foreground shadow-sm flex-shrink-0">
-            <Briefcase size={20} />
+          <div className="relative bg-gradient-to-tr from-primary to-blue-600 p-2.5 rounded-xl text-primary-foreground shadow-lg shadow-primary/20 flex-shrink-0 flex items-center justify-center">
+            <Briefcase size={18} />
+            {isMock && (
+              <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-amber-500 border-2 border-card flex items-center justify-center" title="Mock Mode (LocalStorage)">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-600 animate-pulse" />
+              </span>
+            )}
           </div>
           {(!isCollapsed || isMobileOpen) && (
             <div className="text-left animate-in fade-in duration-200">
-              <h1 className="font-bold text-sm tracking-tight leading-none text-foreground">Advocate ERP</h1>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-semibold mt-1 block">Case Manager</span>
+              <h1 className="font-extrabold text-sm tracking-tight leading-none text-foreground">Advocate ERP</h1>
+              <span className="text-[8px] text-muted-foreground uppercase tracking-widest font-black mt-1 block">Case Manager</span>
+              {isMock && (
+                <div className="flex items-center space-x-1 px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[8px] font-bold text-amber-600 dark:text-amber-400 mt-1.5 w-fit">
+                  <span className="h-1 w-1 rounded-full bg-amber-500 block animate-ping" />
+                  <span>Mock Database</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -76,12 +85,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
         {/* Desktop Expand/Collapse Arrow */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="md:block hidden p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all focus:outline-none"
+          className="md:block hidden p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-all focus:outline-none border border-border/10"
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
         </button>
-
+ 
         {/* Mobile Close Button */}
         <button
           onClick={() => onClose?.()}
@@ -91,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
           <ChevronLeft size={18} />
         </button>
       </div>
-
+ 
       {/* Nav List */}
       <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto scrollbar-hide">
         {menuItems.map(item => (
@@ -103,10 +112,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
             className={({ isActive }) =>
               `flex items-center ${
                 isCollapsed ? 'justify-center' : 'space-x-3 px-3'
-              } py-2.5 rounded-lg text-sm font-medium transition-all ${
+              } py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                 isActive
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 border border-primary/20 scale-[1.02]'
+                  : 'text-muted-foreground hover:bg-muted/65 hover:text-foreground hover:translate-x-0.5 hover:scale-[1.01]'
               }`
             }
           >
@@ -115,63 +124,87 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
           </NavLink>
         ))}
       </nav>
-
-      {/* Database Mode Warning Banner (if running mock fallback) */}
-      {isMock && (
-        <div 
-          className={`mx-3 mb-3 p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center justify-center ${
-            isCollapsed && !isMobileOpen ? 'w-10 mx-auto' : 'space-x-2'
-          }`}
-          title={isCollapsed ? "Mock Mode (LocalStorage)" : undefined}
-        >
-          <ShieldAlert className="text-amber-500 flex-shrink-0" size={16} />
-          {(!isCollapsed || isMobileOpen) && (
-            <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 truncate animate-in fade-in duration-200">
-              Mock Mode (LocalStorage)
-            </span>
-          )}
-        </div>
-      )}
-
+ 
       {/* Footer Area */}
-      <div className="p-3 border-t border-border space-y-4">
-        {/* Theme Toggle & User Info */}
-        <div className={`flex ${isCollapsed && !isMobileOpen ? 'flex-col items-center space-y-3' : 'items-center justify-between'}`}>
-          {(!isCollapsed || isMobileOpen) && (
-            <div className="max-w-[130px] truncate text-left animate-in fade-in duration-200">
-              <p className="text-xs font-semibold text-foreground truncate" title={user?.email}>
-                {user?.user_metadata?.name || user?.email?.split('@')[0]}
-              </p>
-              <p className="text-[9px] text-muted-foreground truncate">
-                {user?.email}
-              </p>
+      <div className="p-4 border-t border-border/40 mt-auto space-y-4">
+        {isCollapsed && !isMobileOpen ? (
+          /* Collapsed Footer View */
+          <div className="flex flex-col items-center space-y-4">
+            {/* Avatar Circle */}
+            <div 
+              className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-blue-500 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-primary/10 flex-shrink-0 cursor-default"
+              title={user?.email}
+            >
+              {(user?.user_metadata?.name || user?.email || 'A').charAt(0).toUpperCase()}
             </div>
-          )}
-          
-          {/* Toggle Switch */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-all border border-border flex items-center justify-center flex-shrink-0"
-            aria-label="Toggle Theme"
-            title="Toggle Display Theme"
-          >
-            {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
-          </button>
-        </div>
-
-        {/* Sign Out Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleLogout}
-          className={`${
-            isCollapsed && !isMobileOpen ? 'p-2 w-10 mx-auto' : 'w-full space-x-2'
-          } flex items-center justify-center border-border text-muted-foreground hover:text-destructive hover:border-destructive/30`}
-          title="Sign Out"
-        >
-          <LogOut size={15} className="flex-shrink-0" />
-          {(!isCollapsed || isMobileOpen) && <span className="animate-in fade-in duration-200">Sign Out</span>}
-        </Button>
+            
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="h-9 w-9 rounded-xl bg-muted/80 text-muted-foreground hover:text-foreground border border-border/50 hover:bg-muted transition-all flex items-center justify-center flex-shrink-0"
+              title="Toggle Theme"
+            >
+              {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
+            </button>
+ 
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="h-9 w-9 rounded-xl border border-border/50 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/5 hover:border-rose-500/20 transition-all flex items-center justify-center flex-shrink-0"
+              title="Sign Out"
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        ) : (
+          /* Expanded Footer View */
+          <div className="space-y-4">
+            {/* User Info Block */}
+            <div className="flex items-center space-x-3 p-2 rounded-xl bg-muted/30 border border-border/30">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-blue-500 text-white font-extrabold flex items-center justify-center text-sm shadow-md shadow-primary/15 flex-shrink-0">
+                {(user?.user_metadata?.name || user?.email || 'A').charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1 text-left">
+                <p className="text-xs font-bold text-foreground truncate" title={user?.email}>
+                  {user?.user_metadata?.name || user?.email?.split('@')[0]}
+                </p>
+                <p className="text-[10px] text-muted-foreground truncate leading-none mt-1">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+ 
+            {/* Actions Bar */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={toggleTheme}
+                className="flex-1 h-9 rounded-lg bg-muted/60 text-muted-foreground hover:text-foreground border border-border/40 hover:bg-muted transition-all flex items-center justify-center space-x-1.5 text-xs font-semibold"
+                title="Toggle Theme"
+              >
+                {theme === 'light' ? (
+                  <>
+                    <Moon size={14} />
+                    <span>Dark</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={14} />
+                    <span>Light</span>
+                  </>
+                )}
+              </button>
+ 
+              <button
+                onClick={handleLogout}
+                className="h-9 px-3 rounded-lg border border-border/40 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/5 hover:border-rose-500/20 transition-all flex items-center justify-center space-x-1.5 text-xs font-semibold"
+                title="Sign Out"
+              >
+                <LogOut size={14} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </aside>
   );
