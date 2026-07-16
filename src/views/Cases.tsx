@@ -18,7 +18,8 @@ import {
   AlertCircle,
   List,
   Kanban,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 
 export const Cases: React.FC = () => {
@@ -172,6 +173,18 @@ export const Cases: React.FC = () => {
       fetchData();
     } catch (err) {
       toast('Failed to move case card', 'error');
+    }
+  };
+
+  const handleDeleteCase = async (id: string, title: string) => {
+    if (window.confirm(`⚠️ WARNING: Are you sure you want to delete case "${title}"?\n\nDeleting this case will permanently remove all associated hearing dates, timeline notes, evidence documents, and invoices. This action cannot be undone.`)) {
+      try {
+        await db.deleteCase(id);
+        toast(`Case "${title}" deleted successfully.`, 'success');
+        fetchData();
+      } catch (err) {
+        toast('Failed to delete case', 'error');
+      }
     }
   };
 
@@ -422,6 +435,16 @@ export const Cases: React.FC = () => {
                                     <Calendar size={14} className="mr-2" />
                                     Update Hearing
                                   </button>
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuId(null);
+                                      handleDeleteCase(c.id, c.case_title);
+                                    }}
+                                    className="flex w-full items-center px-4 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-500/5 transition-colors border-t border-border/40 mt-1 pt-2"
+                                  >
+                                    <Trash2 size={14} className="mr-2" />
+                                    Delete Case File
+                                  </button>
                                 </div>
                               </div>
                             )}
@@ -513,6 +536,13 @@ export const Cases: React.FC = () => {
                                   <span>Open</span>
                                   <ChevronRight size={10} />
                                 </Button>
+                                <button
+                                  onClick={() => handleDeleteCase(c.id, c.case_title)}
+                                  className="text-muted-foreground hover:text-rose-600 p-1 hover:bg-rose-500/5 rounded-md transition-all border border-border/30 h-6 w-6 flex items-center justify-center focus:outline-none"
+                                  title="Delete Case"
+                                >
+                                  <Trash2 size={11} />
+                                </button>
                                 <button
                                   onClick={() => handleQuickStatusShift(c.id, c.status, 'next')}
                                   className="text-[10px] font-bold text-muted-foreground hover:text-foreground p-1 hover:bg-muted rounded-md transition-all border border-border/30"

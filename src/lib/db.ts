@@ -279,6 +279,30 @@ export const db = {
     }
   },
 
+  async deleteClient(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const clients = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const filteredClients = clients.filter((c: Client) => c.id !== id);
+      localStorage.setItem('adv_clients', JSON.stringify(filteredClients));
+
+      // Cascade delete client's cases
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const filteredCases = cases.filter((c: Case) => c.client_id !== id);
+      localStorage.setItem('adv_cases', JSON.stringify(filteredCases));
+
+      // Cascade delete invoices associated with this client
+      const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const filteredInvoices = invoices.filter((inv: Invoice) => inv.client_id !== id);
+      localStorage.setItem('adv_invoices', JSON.stringify(filteredInvoices));
+    }
+  },
+
   // Cases Actions
   async getCases(): Promise<Case[]> {
     if (isSupabaseConfigured && supabase) {
@@ -388,6 +412,35 @@ export const db = {
       const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
       const updated = cases.map(c => c.id === id ? { ...c, description } : c);
       localStorage.setItem('adv_cases', JSON.stringify(updated));
+    }
+  },
+
+  async deleteCase(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const filteredCases = cases.filter((c: Case) => c.id !== id);
+      localStorage.setItem('adv_cases', JSON.stringify(filteredCases));
+
+      // Cascade delete related updates
+      const updates = JSON.parse(localStorage.getItem('adv_updates') || '[]');
+      const filteredUpdates = updates.filter((u: CaseUpdate) => u.case_id !== id);
+      localStorage.setItem('adv_updates', JSON.stringify(filteredUpdates));
+
+      // Cascade delete related documents
+      const docs = JSON.parse(localStorage.getItem('adv_documents') || '[]');
+      const filteredDocs = docs.filter((d: Document) => d.case_id !== id);
+      localStorage.setItem('adv_documents', JSON.stringify(filteredDocs));
+
+      // Cascade delete related invoices
+      const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const filteredInvoices = invoices.filter((inv: Invoice) => inv.case_id !== id);
+      localStorage.setItem('adv_invoices', JSON.stringify(filteredInvoices));
     }
   },
 

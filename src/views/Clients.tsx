@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { useToast } from '../context/ToastContext';
-import { Users, UserPlus, Phone, Mail, MapPin, Search, FolderPlus } from 'lucide-react';
+import { Users, UserPlus, Phone, Mail, MapPin, Search, FolderPlus, Trash2 } from 'lucide-react';
 
 export const Clients: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -51,6 +51,18 @@ export const Clients: React.FC = () => {
       toast('Failed to load clients list', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteClient = async (id: string, name: string) => {
+    if (window.confirm(`⚠️ WARNING: Are you sure you want to delete client "${name}"?\n\nDeleting this client will permanently remove all their linked cases, hearings, and billing invoices. This action cannot be undone.`)) {
+      try {
+        await db.deleteClient(id);
+        toast(`Client "${name}" and all associated cases/invoices deleted.`, 'success');
+        fetchClients();
+      } catch (err) {
+        toast('Failed to delete client', 'error');
+      }
     }
   };
 
@@ -250,15 +262,26 @@ export const Clients: React.FC = () => {
                         {new Date(c.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenCaseModal(c)}
-                          className="h-8 text-xs flex items-center space-x-1.5 ml-auto border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
-                        >
-                          <FolderPlus size={13} />
-                          <span>Add Case</span>
-                        </Button>
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenCaseModal(c)}
+                            className="h-8 text-xs flex items-center space-x-1 border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/30"
+                          >
+                            <FolderPlus size={13} />
+                            <span>Add Case</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClient(c.id, c.name)}
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/5 focus:outline-none"
+                            title="Delete Client"
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
