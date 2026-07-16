@@ -161,7 +161,7 @@ export const Cases: React.FC = () => {
   };
 
   const handleQuickStatusShift = async (caseId: string, currentStatus: Case['status'], direction: 'next' | 'prev') => {
-    const statuses: Case['status'][] = ['Active', 'Delayed', 'Completed', 'Cancelled'];
+    const statuses: Case['status'][] = ['Active', 'Delayed', 'Hold', 'Completed', 'Cancelled'];
     const idx = statuses.indexOf(currentStatus);
     let nextIdx = idx + (direction === 'next' ? 1 : -1);
     if (nextIdx < 0) nextIdx = statuses.length - 1;
@@ -214,6 +214,7 @@ export const Cases: React.FC = () => {
   const kanbanColumns: { status: Case['status']; label: string; accentClass: string }[] = [
     { status: 'Active', label: 'Active Matter', accentClass: 'border-t-emerald-500' },
     { status: 'Delayed', label: 'Delayed', accentClass: 'border-t-amber-500' },
+    { status: 'Hold', label: 'On Hold', accentClass: 'border-t-slate-400' },
     { status: 'Completed', label: 'Disposed / Closed', accentClass: 'border-t-sky-500' },
     { status: 'Cancelled', label: 'Cancelled / Settled', accentClass: 'border-t-rose-500' }
   ];
@@ -287,6 +288,7 @@ export const Cases: React.FC = () => {
                 <option value="Active">Active Only</option>
                 <option value="Completed">Completed Only</option>
                 <option value="Delayed">Delayed Only</option>
+                <option value="Hold">On Hold Only</option>
                 <option value="Cancelled">Cancelled Only</option>
               </select>
             )}
@@ -362,6 +364,8 @@ export const Cases: React.FC = () => {
                                 ? 'info'
                                 : c.status === 'Delayed'
                                 ? 'warning'
+                                : c.status === 'Hold'
+                                ? 'outline'
                                 : 'error'
                             }
                           >
@@ -691,7 +695,7 @@ export const Cases: React.FC = () => {
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">Select a new status for this case:</p>
           <div className="grid grid-cols-2 gap-2">
-            {(['Active', 'Completed', 'Delayed', 'Cancelled'] as Case['status'][]).map(st => (
+            {(['Active', 'Completed', 'Delayed', 'Cancelled', 'Hold'] as Case['status'][]).map(st => (
               <button
                 key={st}
                 type="button"

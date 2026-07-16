@@ -215,6 +215,8 @@ export const Calendar: React.FC = () => {
                                       ? 'info'
                                       : c.status === 'Delayed'
                                       ? 'warning'
+                                      : c.status === 'Hold'
+                                      ? 'outline'
                                       : 'error'
                                   }
                                 >

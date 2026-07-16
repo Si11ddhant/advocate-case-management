@@ -15,7 +15,7 @@ export interface Case {
   case_title: string;
   court_name: string;
   case_number: string;
-  status: 'Active' | 'Completed' | 'Delayed' | 'Cancelled';
+  status: 'Active' | 'Completed' | 'Delayed' | 'Cancelled' | 'Hold';
   next_hearing_date: string;
   description: string;
   created_at: string;

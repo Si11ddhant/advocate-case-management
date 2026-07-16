@@ -415,13 +415,15 @@ export const CaseDetail: React.FC = () => {
                 className="h-9 px-3 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-muted/50 flex items-center justify-between space-x-2 focus:outline-none shadow-sm transition-all w-36 text-foreground"
               >
                 <div className="flex items-center space-x-2">
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
                     status === 'Active'
                       ? 'bg-emerald-500'
                       : status === 'Completed'
                       ? 'bg-sky-500'
                       : status === 'Delayed'
                       ? 'bg-amber-500'
+                      : status === 'Hold'
+                      ? 'bg-slate-400'
                       : 'bg-rose-500'
                   }`} />
                   <span className="truncate">{status}</span>
@@ -431,7 +433,7 @@ export const CaseDetail: React.FC = () => {
               
               {isStatusDropdownOpen && (
                 <div className="absolute left-0 mt-1.5 w-36 rounded-lg border border-border bg-card shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20 animate-in fade-in slide-in-from-top-2 duration-100 p-1">
-                  {(['Active', 'Completed', 'Delayed', 'Cancelled'] as Case['status'][]).map(st => (
+                  {(['Active', 'Completed', 'Delayed', 'Cancelled', 'Hold'] as Case['status'][]).map(st => (
                     <button
                       key={st}
                       type="button"
@@ -453,6 +455,8 @@ export const CaseDetail: React.FC = () => {
                             ? 'bg-sky-500'
                             : st === 'Delayed'
                             ? 'bg-amber-500'
+                            : st === 'Hold'
+                            ? 'bg-slate-400'
                             : 'bg-rose-500'
                         }`} />
                         <span>{st}</span>
