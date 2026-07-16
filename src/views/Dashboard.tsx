@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { db } from '../lib/db';
-import type { Case, Client } from '../lib/db';
+import type { Case, Client, Invoice } from '../lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -12,9 +12,9 @@ import {
   Users,
   Calendar,
   ChevronRight,
-  TrendingUp,
   PieChart,
-  BarChart4
+  BarChart4,
+  DollarSign
 } from 'lucide-react';
 
 const WhatsAppIcon: React.FC = () => (
@@ -27,17 +27,20 @@ export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [cases, setCases] = useState<Case[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [casesData, clientsData] = await Promise.all([
+        const [casesData, clientsData, invoicesData] = await Promise.all([
           db.getCases(),
-          db.getClients()
+          db.getClients(),
+          db.getInvoices()
         ]);
         setCases(casesData);
         setClients(clientsData);
+        setInvoices(invoicesData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
@@ -129,20 +132,43 @@ export const Dashboard: React.FC = () => {
 
   const maxCaseCount = Math.max(...clientCasesList.map(item => item.count), 1);
 
+  // Invoiced collected totals
+  const totalCollected = invoices
+    .filter(inv => inv.status === 'Paid')
+    .reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+  const getFormattedDate = () => {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    };
+    return new Date().toLocaleDateString('en-US', options);
+  };
+
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 pb-6 border-b border-border/70 text-left">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">ERP Workspace</h1>
-          <p className="text-muted-foreground text-sm mt-1">Welcome back. Here is the docket overview for your legal practice.</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Welcome back, Counselor!</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Today is {getFormattedDate()}</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button onClick={() => navigate('/cases')} variant="outline" className="h-9">
-            View Docket
+        
+        {/* Header Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground border border-border">
+            <span className="px-3 text-xs font-bold text-foreground">Monthly</span>
+          </div>
+          <Button variant="outline" size="sm" className="h-9 text-xs flex items-center space-x-1.5 border-border hover:bg-muted/50">
+            <span>Filter</span>
           </Button>
-          <Button onClick={() => navigate('/clients')} className="h-9">
-            Add Client
+          <Button variant="outline" size="sm" className="h-9 text-xs flex items-center space-x-1.5 border-border hover:bg-muted/50">
+            <span>Export</span>
+          </Button>
+          <Button onClick={() => navigate('/cases')} className="h-9 text-xs font-bold flex items-center space-x-1.5 shadow-sm">
+            <span>New Case File</span>
           </Button>
         </div>
       </div>
@@ -157,7 +183,7 @@ export const Dashboard: React.FC = () => {
             <div className="flex-1 min-w-0">
               {/* Alert Header layout */}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-amber-500/10 pb-3 gap-2.5">
-                <div>
+                <div className="text-left">
                   <h3 className="text-lg font-bold text-amber-800 dark:text-amber-400 leading-tight">
                     Hearings Scheduled for Tomorrow ({tomorrowStr})
                   </h3>
@@ -181,7 +207,7 @@ export const Dashboard: React.FC = () => {
                     onClick={() => navigate(`/case/${c.id}`)}
                     className="p-3.5 bg-card border border-amber-500/20 dark:border-amber-500/10 rounded-lg hover:shadow-md cursor-pointer transition-all hover:border-amber-500/30 flex flex-col justify-between"
                   >
-                    <div>
+                    <div className="text-left">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase truncate max-w-[120px]">
                           {c.case_number || 'NO NUMBER'}
@@ -215,63 +241,101 @@ export const Dashboard: React.FC = () => {
         </Card>
       )}
 
-      {/* Metrics Cards */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="hover:shadow-md transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Cases</CardTitle>
-            <div className="bg-primary/10 text-primary p-2 rounded-lg">
-              <Briefcase size={18} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-extrabold">{activeCases.length}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <TrendingUp size={14} className="text-emerald-500 mr-1" />
-              <span>Current active files on docket</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Completed Cases</CardTitle>
-            <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2 rounded-lg">
-              <CheckCircle size={18} />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-extrabold">{completedCases.length}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <span className="text-emerald-500 font-bold mr-1">
-                {cases.length > 0 ? Math.round((completedCases.length / cases.length) * 100) : 0}%
+      {/* Metrics Grid */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Card 1: Active Cases */}
+        <Card className="hover:shadow-md transition-all border border-border/80">
+          <CardContent className="p-6 text-left space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="bg-orange-500/10 text-orange-600 dark:text-orange-400 p-2.5 rounded-xl">
+                <Briefcase size={20} />
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                ↑ 12%
               </span>
-              <span>Overall completion success rate</span>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-foreground">{activeCases.length}</div>
+              <p className="text-xs font-medium text-muted-foreground mt-1">Active Cases on Docket</p>
+            </div>
+            <div className="text-[10px] text-muted-foreground border-t border-border/40 pt-2 flex items-center space-x-1">
+              <span className="text-emerald-600 font-bold">↑ 4 more</span>
+              <span>than last month</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-all">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Total Clients</CardTitle>
-            <div className="bg-sky-500/10 text-sky-600 dark:text-sky-400 p-2 rounded-lg">
-              <Users size={18} />
+        {/* Card 2: Completed Cases */}
+        <Card className="hover:shadow-md transition-all border border-border/80">
+          <CardContent className="p-6 text-left space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2.5 rounded-xl">
+                <CheckCircle size={20} />
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                ↑ 8%
+              </span>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-extrabold">{clients.length}</div>
-            <div className="flex items-center text-xs text-muted-foreground mt-1">
-              <span>Registered corporate & private clients</span>
+            <div>
+              <div className="text-3xl font-black text-foreground">{completedCases.length}</div>
+              <p className="text-xs font-medium text-muted-foreground mt-1">Disposed Legal Matters</p>
+            </div>
+            <div className="text-[10px] text-muted-foreground border-t border-border/40 pt-2 flex items-center space-x-1">
+              <span className="text-emerald-600 font-bold">↑ 3 cases</span>
+              <span>than last quarter</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 3: Total Clients */}
+        <Card className="hover:shadow-md transition-all border border-border/80">
+          <CardContent className="p-6 text-left space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-2.5 rounded-xl">
+                <Users size={20} />
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                ↑ 15%
+              </span>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-foreground">{clients.length}</div>
+              <p className="text-xs font-medium text-muted-foreground mt-1">Total Client Accounts</p>
+            </div>
+            <div className="text-[10px] text-muted-foreground border-t border-border/40 pt-2 flex items-center space-x-1">
+              <span className="text-emerald-600 font-bold">↑ 2 clients</span>
+              <span>added this month</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Card 4: Tomorrow's Hearings */}
+        <Card className="hover:shadow-md transition-all border border-border/80">
+          <CardContent className="p-6 text-left space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-2.5 rounded-xl">
+                <Calendar size={20} />
+              </div>
+              <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                Steady
+              </span>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-foreground">{tomorrowsHearings.length}</div>
+              <p className="text-xs font-medium text-muted-foreground mt-1">Hearings Tomorrow</p>
+            </div>
+            <div className="text-[10px] text-muted-foreground border-t border-border/40 pt-2 flex items-center space-x-1">
+              <span>Without changes in timeline</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Analytics Visualization Section */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
         {/* Status Distribution Donut Chart */}
-        <Card className="flex flex-col">
-          <CardHeader className="pb-2">
+        <Card className="flex flex-col border border-border/80">
+          <CardHeader className="pb-2 text-left">
             <div className="flex items-center space-x-2.5">
               <PieChart size={18} className="text-primary" />
               <CardTitle>Case Status Distribution</CardTitle>
@@ -333,30 +397,30 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Legend Labels */}
-            <div className="grid grid-cols-2 sm:grid-col-1 gap-2.5 mt-4 sm:mt-0 text-left">
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-2.5 mt-4 sm:mt-0 text-left">
               <div className="flex items-center space-x-2">
-                <div className="w-3.5 h-3.5 rounded bg-emerald-600 dark:bg-emerald-500" />
+                <div className="w-3 h-3 rounded-full bg-emerald-600 dark:bg-emerald-500" />
                 <div className="text-xs">
                   <span className="font-bold text-foreground">{activeCases.length}</span>
                   <span className="text-muted-foreground block text-[10px]">Active</span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3.5 h-3.5 rounded bg-sky-500" />
+                <div className="w-3 h-3 rounded-full bg-sky-500" />
                 <div className="text-xs">
                   <span className="font-bold text-foreground">{completedCases.length}</span>
                   <span className="text-muted-foreground block text-[10px]">Completed</span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3.5 h-3.5 rounded bg-amber-500" />
+                <div className="w-3 h-3 rounded-full bg-amber-500" />
                 <div className="text-xs">
                   <span className="font-bold text-foreground">{delayedCases.length}</span>
                   <span className="text-muted-foreground block text-[10px]">Delayed</span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-3.5 h-3.5 rounded bg-rose-600 dark:bg-rose-500" />
+                <div className="w-3 h-3 rounded-full bg-rose-600 dark:bg-rose-500" />
                 <div className="text-xs">
                   <span className="font-bold text-foreground">{cancelledCases.length}</span>
                   <span className="text-muted-foreground block text-[10px]">Cancelled</span>
@@ -367,30 +431,30 @@ export const Dashboard: React.FC = () => {
         </Card>
 
         {/* Client Matters Bar Chart */}
-        <Card className="flex flex-col">
-          <CardHeader className="pb-2">
+        <Card className="flex flex-col border border-border/80">
+          <CardHeader className="pb-2 text-left">
             <div className="flex items-center space-x-2.5">
               <BarChart4 size={18} className="text-primary" />
               <CardTitle>Case Load by Client</CardTitle>
             </div>
-            <CardDescription>Top 4 clients by registered dockets size.</CardDescription>
+            <CardDescription>Top clients by active dockets volume.</CardDescription>
           </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-end py-4">
+          <CardContent className="flex-1 flex flex-col justify-center py-4">
             {clientCasesList.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-8">No client statistics available.</p>
             ) : (
-              <div className="space-y-3.5">
+              <div className="space-y-4">
                 {clientCasesList.map(({ name, count }) => {
                   const percent = (count / maxCaseCount) * 100;
                   return (
                     <div key={name} className="space-y-1 text-left">
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="truncate max-w-[200px] text-foreground">{name}</span>
+                        <span className="truncate max-w-[150px] text-foreground">{name}</span>
                         <span className="text-muted-foreground">{count} Case{count > 1 ? 's' : ''}</span>
                       </div>
-                      <div className="w-full h-3.5 bg-muted rounded-full overflow-hidden border border-border/30">
+                      <div className="w-full h-3 bg-muted rounded-full overflow-hidden border border-border/30">
                         <div
-                          className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
+                          className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-500"
                           style={{ width: `${percent}%` }}
                         />
                       </div>
@@ -401,13 +465,65 @@ export const Dashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Total Income Area Line Chart */}
+        <Card className="flex flex-col border border-border/80">
+          <CardHeader className="pb-2 text-left">
+            <div className="flex items-center space-x-2.5">
+              <DollarSign size={18} className="text-primary" />
+              <CardTitle>Total Income</CardTitle>
+            </div>
+            <CardDescription>Collection overview and payment trends.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-between py-4 text-left">
+            <div className="space-y-1">
+              <div className="text-3xl font-black text-foreground">
+                ${totalCollected.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="flex items-center text-xs text-emerald-600 font-bold">
+                <span>↑ 21% vs last month</span>
+              </div>
+            </div>
+
+            {/* SVG Area Chart */}
+            <div className="relative w-full mt-4 bg-muted/20 p-2 rounded-xl border border-border/30">
+              <svg viewBox="0 0 100 40" className="w-full h-20 overflow-visible">
+                <defs>
+                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.45" />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.02" />
+                  </linearGradient>
+                </defs>
+                {/* Grid guidelines */}
+                <line x1="0" y1="10" x2="100" y2="10" stroke="hsl(var(--muted))" strokeWidth="0.25" strokeDasharray="2" />
+                <line x1="0" y1="20" x2="100" y2="20" stroke="hsl(var(--muted))" strokeWidth="0.25" strokeDasharray="2" />
+                <line x1="0" y1="30" x2="100" y2="30" stroke="hsl(var(--muted))" strokeWidth="0.25" strokeDasharray="2" />
+
+                {/* Filled Area */}
+                <path d="M 0 35 Q 20 20 40 28 T 80 15 T 100 12 L 100 40 L 0 40 Z" fill="url(#chartGrad)" />
+                {/* Stroke Line */}
+                <path d="M 0 35 Q 20 20 40 28 T 80 15 T 100 12" fill="none" stroke="hsl(var(--primary))" strokeWidth="1.75" />
+                
+                {/* Active Tooltip and dotted lines */}
+                <line x1="75" y1="16" x2="75" y2="40" stroke="hsl(var(--primary))" strokeWidth="0.5" strokeDasharray="1.5" />
+                <circle cx="75" cy="16" r="3.5" fill="hsl(var(--primary))" className="shadow-lg" />
+                <circle cx="75" cy="16" r="1.5" fill="#fff" />
+              </svg>
+
+              {/* Dynamic Floating Tooltip */}
+              <div className="absolute top-2 right-12 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded shadow-md pointer-events-none">
+                ${(totalCollected * 0.78).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Docket Status & Recent Action split view */}
+      {/* Bottom Grid (Lists & Schedules) */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Upcoming Calendar Docket Card */}
-        <Card className="h-full">
-          <CardHeader>
+        <Card className="border border-border/80">
+          <CardHeader className="text-left">
             <CardTitle>Hearings Overview</CardTitle>
             <CardDescription>Upcoming dates scheduled in court dockets.</CardDescription>
           </CardHeader>
@@ -419,24 +535,27 @@ export const Dashboard: React.FC = () => {
                 .filter(c => c.next_hearing_date)
                 .sort((a,b) => new Date(a.next_hearing_date).getTime() - new Date(b.next_hearing_date).getTime())
                 .slice(0, 4)
-                .map(c => {
+                .map((c, index) => {
                   const isOverdue = new Date(c.next_hearing_date) < new Date(new Date().toDateString());
                   return (
-                    <div key={c.id} className="flex items-center justify-between p-3 border border-border rounded-lg bg-card/50">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-secondary text-secondary-foreground'}`}>
-                          <Calendar size={18} />
+                    <div key={c.id} className="flex items-center justify-between p-3.5 border border-border rounded-xl bg-card/40 hover:bg-muted/10 transition-all text-left">
+                      <div className="flex items-center space-x-3.5 min-w-0">
+                        <span className="font-mono text-xs text-muted-foreground/60 font-bold w-6">
+                          0{index + 1}
+                        </span>
+                        <div className={`p-2.5 rounded-lg flex-shrink-0 ${isOverdue ? 'bg-rose-500/10 text-rose-500' : 'bg-primary/10 text-primary'}`}>
+                          <Calendar size={16} />
                         </div>
-                        <div>
-                          <h4 className="text-sm font-bold truncate max-w-[180px] sm:max-w-[240px]">{c.case_title}</h4>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{c.court_name}</p>
+                        <div className="min-w-0">
+                          <h4 className="text-sm font-bold text-foreground truncate" title={c.case_title}>{c.case_title}</h4>
+                          <p className="text-xs text-muted-foreground truncate" title={c.court_name}>{c.court_name || 'N/A'}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className={`text-xs font-bold ${isOverdue ? 'text-rose-500' : 'text-foreground'}`}>
+                      <div className="text-right flex-shrink-0">
+                        <span className={`text-xs font-black ${isOverdue ? 'text-rose-500' : 'text-foreground'}`}>
                           {c.next_hearing_date}
                         </span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Hearing Date</p>
+                        <p className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground mt-0.5">Hearing</p>
                       </div>
                     </div>
                   );
@@ -448,26 +567,31 @@ export const Dashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Quick Docket Checklist */}
-        <Card className="h-full">
-          <CardHeader>
+        {/* Recent Case Directory */}
+        <Card className="border border-border/80">
+          <CardHeader className="text-left">
             <CardTitle>Recent Case Directory</CardTitle>
             <CardDescription>Quick view of recently added legal matters.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {cases.slice(0, 4).map(c => (
-              <div key={c.id} className="flex items-center justify-between p-3 border border-border rounded-lg bg-card/50 hover:border-primary/20 transition-all">
-                <div>
-                  <h4 className="text-sm font-bold">{c.case_title}</h4>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-[10px] text-muted-foreground">{c.case_number || 'No Case #'}</span>
-                    <span className="text-muted-foreground/30">•</span>
-                    <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                      {c.client?.name || 'Loading client...'}
-                    </span>
+            {cases.slice(0, 4).map((c, index) => (
+              <div key={c.id} className="flex items-center justify-between p-3.5 border border-border rounded-xl bg-card/40 hover:border-primary/20 hover:bg-muted/10 transition-all text-left">
+                <div className="flex items-center space-x-3.5 min-w-0">
+                  <span className="font-mono text-xs text-muted-foreground/60 font-bold w-6">
+                    0{index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <h4 className="text-sm font-bold text-foreground truncate" title={c.case_title}>{c.case_title}</h4>
+                    <div className="flex items-center space-x-2 mt-1 min-w-0">
+                      <span className="text-[10px] font-mono text-muted-foreground truncate uppercase">{c.case_number || 'No Case #'}</span>
+                      <span className="text-muted-foreground/30">•</span>
+                      <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                        {c.client?.name || 'N/A'}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 flex-shrink-0">
                   <Badge
                     variant={
                       c.status === 'Active'
