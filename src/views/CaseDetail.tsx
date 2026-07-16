@@ -254,20 +254,33 @@ export const CaseDetail: React.FC = () => {
     }
     setSubmittingDoc(true);
     try {
-      // Note: In mock/simple mode we simulate upload and store metadata
-      await db.uploadDocument({
-        case_id: id,
-        file_name: docFile.name,
-        file_url: '#', // Simulate server link
-        document_category: docCategory
-      });
-      setDocFile(null);
-      toast(`Document "${docFile.name}" registered successfully!`, 'success');
-      const updatedDocs = await db.getDocumentsByCaseId(id);
-      setDocuments(updatedDocs);
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Url = reader.result as string;
+        try {
+          await db.uploadDocument({
+            case_id: id,
+            file_name: docFile.name,
+            file_url: base64Url,
+            document_category: docCategory
+          });
+          setDocFile(null);
+          toast(`Document "${docFile.name}" registered successfully!`, 'success');
+          const updatedDocs = await db.getDocumentsByCaseId(id);
+          setDocuments(updatedDocs);
+        } catch (err) {
+          toast('Failed to upload document', 'error');
+        } finally {
+          setSubmittingDoc(false);
+        }
+      };
+      reader.onerror = () => {
+        toast('Failed to read document file', 'error');
+        setSubmittingDoc(false);
+      };
+      reader.readAsDataURL(docFile);
     } catch (err) {
       toast('Failed to upload document', 'error');
-    } finally {
       setSubmittingDoc(false);
     }
   };
@@ -826,25 +839,37 @@ export const CaseDetail: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast('Printing document layout...', 'info')}
+                onClick={() => window.print()}
                 className="flex items-center space-x-1.5"
               >
                 <Printer size={14} />
                 <span>Print</span>
               </Button>
               <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    toast(`Downloading ${previewDoc.file_name} (Mock)`, 'info');
-                    setPreviewDoc(null);
-                  }}
-                  className="flex items-center space-x-1.5"
-                >
-                  <Download size={14} />
-                  <span>Download</span>
-                </Button>
+                {previewDoc.file_url && previewDoc.file_url !== '#' ? (
+                  <a
+                    href={previewDoc.file_url}
+                    download={previewDoc.file_name}
+                    className="inline-flex h-9 items-center justify-center rounded-lg border border-border px-3 text-xs font-semibold hover:bg-muted/50 transition-colors shadow-sm gap-1.5 bg-background text-foreground"
+                    onClick={() => setPreviewDoc(null)}
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </a>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      toast(`Downloading ${previewDoc.file_name} (Mock)`, 'info');
+                      setPreviewDoc(null);
+                    }}
+                    className="flex items-center space-x-1.5"
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </Button>
+                )}
                 <Button variant="primary" size="sm" onClick={() => setPreviewDoc(null)}>
                   Close
                 </Button>
@@ -852,96 +877,162 @@ export const CaseDetail: React.FC = () => {
             </div>
           }
         >
-          {/* Styled Document Simulator */}
-          <div className="border border-border/80 p-6 rounded-lg bg-white text-slate-800 font-serif leading-relaxed shadow-inner max-h-[50vh] overflow-y-auto scrollbar-hide text-left dark:bg-slate-900 dark:text-slate-200">
-            {/* Retro Letterhead Header */}
-            <div className="text-center border-b-2 border-slate-900 dark:border-slate-200 pb-4 mb-6">
-              <div className="flex items-center justify-center space-x-2 mb-1.5 text-primary">
-                <Scale size={28} />
+          {previewDoc.file_url && previewDoc.file_url !== '#' ? (
+            /* Render Live Document Viewers */
+            <div className="space-y-4">
+              {/* Document Metadata header */}
+              <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border/80 pb-2 text-left">
+                <div>
+                  <span className="font-semibold text-foreground">File Classification:</span> {previewDoc.document_category}
+                </div>
+                <div>
+                  <span className="font-semibold text-foreground">Uploaded:</span> {new Date(previewDoc.uploaded_at).toLocaleString()}
+                </div>
               </div>
-              <h2 className="text-xl font-bold uppercase tracking-wider">Advocate Court Filings Portal</h2>
-              <p className="text-[10px] font-sans font-semibold tracking-widest text-slate-500 uppercase mt-0.5">
-                Official Case Docket Exhibits Registry
-              </p>
-            </div>
 
-            {/* Metadata Section */}
-            <div className="grid grid-cols-2 gap-4 text-xs font-sans mb-6 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-border/50">
-              <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">CASE MATTER</span>
-                <span className="font-bold">{kase.case_title}</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">CASE DOCKET NUMBER</span>
-                <span className="font-mono font-bold uppercase">{kase.case_number || 'N/A'}</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">DOCUMENT CLASSIFICATION</span>
-                <span className="font-semibold">{previewDoc.document_category} File</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">RECORDED AT</span>
-                <span>{new Date(previewDoc.uploaded_at).toLocaleString()}</span>
-              </div>
-            </div>
-
-            {/* Document Content Simulation */}
-            <div className="space-y-4 text-xs tracking-wide">
-              <span className="block font-sans font-bold text-[10px] text-slate-400 uppercase tracking-widest">
-                EXHIBIT MEMORANDUM STATEMENTS
-              </span>
-              
-              {previewDoc.document_category === 'Pleading' ? (
-                <>
-                  <p className="font-bold text-center underline my-3">MOTION IN THE COURT OF JURISDICTION</p>
-                  <p>
-                    Now comes the representative counsel of record on behalf of the client entity, and respectably moves this Honorable Court for relief under statutory civil procedure rules.
-                  </p>
-                  <p>
-                    WHEREFORE, counsel requests that this Honorable Court enter order of dismissal, scheduling directives, or appropriate summaries and relief as deemed just.
-                  </p>
-                </>
-              ) : previewDoc.document_category === 'Evidence' ? (
-                <>
-                  <p className="font-bold text-center underline my-3">RECORD OF CERTIFIED EVIDENTIARY DEPOSITIONS</p>
-                  <p>
-                    Counsel has attached records of certified transcripts, spreadsheet summaries, or visual exhibits tagged under indexing rules.
-                  </p>
-                  <p className="border-l-4 border-slate-300 dark:border-slate-700 pl-3 italic py-1 bg-slate-50 dark:bg-slate-800">
-                    "The undersigned witness deposes and states under penalties of perjury that corporate ledger discrepancies were verified on audit review dates."
-                  </p>
-                </>
-              ) : previewDoc.document_category === 'Order' ? (
-                <>
-                  <p className="font-bold text-center underline my-3">MINUTE ORDER OF COURT APPEARANCE</p>
-                  <p>
-                    This matter coming before the Court on motion of counsel, due notice having been served, and the Court being fully advised in the premises:
-                  </p>
-                  <p className="font-semibold text-center my-4 uppercase tracking-wide">
-                    IT IS HEREBY ORDERED THAT THE HEARING IS SCHEDULED TO DATE SPECIFIED.
-                  </p>
-                </>
+              {/* Conditional render based on mimetype or extension */}
+              {previewDoc.file_url.startsWith('data:image/') || previewDoc.file_name.toLowerCase().match(/\.(jpg|jpeg|png|gif|svg|webp)$/) ? (
+                <div className="flex items-center justify-center p-2 bg-muted/20 border border-border/50 rounded-lg">
+                  <img 
+                    src={previewDoc.file_url} 
+                    alt={previewDoc.file_name} 
+                    className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-sm" 
+                  />
+                </div>
+              ) : previewDoc.file_url.startsWith('data:application/pdf') || previewDoc.file_name.toLowerCase().endsWith('.pdf') ? (
+                <div className="w-full h-[60vh] rounded-lg overflow-hidden border bg-muted/20">
+                  <object 
+                    data={previewDoc.file_url} 
+                    type="application/pdf" 
+                    className="w-full h-full"
+                  >
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-center space-y-4">
+                      <FileText size={48} className="text-muted-foreground animate-pulse" />
+                      <div>
+                        <p className="text-sm font-bold text-foreground">PDF Previewer not supported</p>
+                        <p className="text-xs text-muted-foreground mt-1">Please download the file to view its content.</p>
+                      </div>
+                      <a 
+                        href={previewDoc.file_url} 
+                        download={previewDoc.file_name}
+                        className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 shadow-sm transition-all"
+                      >
+                        Download PDF File
+                      </a>
+                    </div>
+                  </object>
+                </div>
               ) : (
-                <>
-                  <p>
-                    General legal brief, exhibits records, and memorandum notes. Please download the original file index `({previewDoc.file_name})` to check attachments, stamps, or digital signatures.
-                  </p>
-                </>
+                <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border rounded-lg text-center space-y-4 bg-muted/20">
+                  <FileText size={48} className="text-primary" />
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground">{previewDoc.file_name}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Direct browser preview is not supported for this file classification.
+                    </p>
+                  </div>
+                  <a 
+                    href={previewDoc.file_url} 
+                    download={previewDoc.file_name}
+                    className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 shadow-sm transition-all"
+                  >
+                    Download File
+                  </a>
+                </div>
               )}
             </div>
-
-            {/* Signature Footer */}
-            <div className="flex justify-between items-end border-t border-slate-200 dark:border-slate-700 pt-6 mt-8 font-sans text-[10px]">
-              <div>
-                <p className="text-slate-400 uppercase">SUBMITTING ADVOCATE</p>
-                <p className="font-bold">{user?.email || 'advocate@example.com'}</p>
+          ) : (
+            /* Styled Document Simulator (Mock Fallback) */
+            <div className="border border-border/80 p-6 rounded-lg bg-white text-slate-800 font-serif leading-relaxed shadow-inner max-h-[50vh] overflow-y-auto scrollbar-hide text-left dark:bg-slate-900 dark:text-slate-200">
+              {/* Retro Letterhead Header */}
+              <div className="text-center border-b-2 border-slate-900 dark:border-slate-200 pb-4 mb-6">
+                <div className="flex items-center justify-center space-x-2 mb-1.5 text-primary">
+                  <Scale size={28} />
+                </div>
+                <h2 className="text-xl font-bold uppercase tracking-wider">Advocate Court Filings Portal</h2>
+                <p className="text-[10px] font-sans font-semibold tracking-widest text-slate-500 uppercase mt-0.5">
+                  Official Case Docket Exhibits Registry
+                </p>
               </div>
-              <div className="text-right">
-                <div className="inline-block border-b border-slate-500 w-24 h-6 mb-1" />
-                <p className="text-slate-400 uppercase">COUNSEL SIGNATURE</p>
+
+              {/* Metadata Section */}
+              <div className="grid grid-cols-2 gap-4 text-xs font-sans mb-6 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg border border-border/50">
+                <div>
+                  <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">CASE MATTER</span>
+                  <span className="font-bold">{kase.case_title}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">CASE DOCKET NUMBER</span>
+                  <span className="font-mono font-bold uppercase">{kase.case_number || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">DOCUMENT CLASSIFICATION</span>
+                  <span className="font-semibold">{previewDoc.document_category} File</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-wide">RECORDED AT</span>
+                  <span>{new Date(previewDoc.uploaded_at).toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Document Content Simulation */}
+              <div className="space-y-4 text-xs tracking-wide">
+                <span className="block font-sans font-bold text-[10px] text-slate-400 uppercase tracking-widest">
+                  EXHIBIT MEMORANDUM STATEMENTS
+                </span>
+                
+                {previewDoc.document_category === 'Pleading' ? (
+                  <>
+                    <p className="font-bold text-center underline my-3">MOTION IN THE COURT OF JURISDICTION</p>
+                    <p>
+                      Now comes the representative counsel of record on behalf of the client entity, and respectably moves this Honorable Court for relief under statutory civil procedure rules.
+                    </p>
+                    <p>
+                      WHEREFORE, counsel requests that this Honorable Court enter order of dismissal, scheduling directives, or appropriate summaries and relief as deemed just.
+                    </p>
+                  </>
+                ) : previewDoc.document_category === 'Evidence' ? (
+                  <>
+                    <p className="font-bold text-center underline my-3">RECORD OF CERTIFIED EVIDENTIARY DEPOSITIONS</p>
+                    <p>
+                      Counsel has attached records of certified transcripts, spreadsheet summaries, or visual exhibits tagged under indexing rules.
+                    </p>
+                    <p className="border-l-4 border-slate-300 dark:border-slate-700 pl-3 italic py-1 bg-slate-50 dark:bg-slate-800">
+                      "The undersigned witness deposes and states under penalties of perjury that corporate ledger discrepancies were verified on audit review dates."
+                    </p>
+                  </>
+                ) : previewDoc.document_category === 'Order' ? (
+                  <>
+                    <p className="font-bold text-center underline my-3">MINUTE ORDER OF COURT APPEARANCE</p>
+                    <p>
+                      This matter coming before the Court on motion of counsel, due notice having been served, and the Court being fully advised in the premises:
+                    </p>
+                    <p className="font-semibold text-center my-4 uppercase tracking-wide">
+                      IT IS HEREBY ORDERED THAT THE HEARING IS SCHEDULED TO DATE SPECIFIED.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      General legal brief, exhibits records, and memorandum notes. Please download the original file index `({previewDoc.file_name})` to check attachments, stamps, or digital signatures.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              {/* Signature Footer */}
+              <div className="flex justify-between items-end border-t border-slate-200 dark:border-slate-700 pt-6 mt-8 font-sans text-[10px]">
+                <div>
+                  <p className="text-slate-400 uppercase">SUBMITTING ADVOCATE</p>
+                  <p className="font-bold">{user?.email || 'advocate@example.com'}</p>
+                </div>
+                <div className="text-right">
+                  <div className="inline-block border-b border-slate-500 w-24 h-6 mb-1" />
+                  <p className="text-slate-400 uppercase">COUNSEL SIGNATURE</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </Modal>
       )}
 
