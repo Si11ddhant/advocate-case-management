@@ -33,17 +33,22 @@ export const Calendar: React.FC = () => {
     );
   }
 
+  const parseLocalDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   // Filter cases that have a hearing date
   const hearingCases = cases
     .filter(c => !!c.next_hearing_date)
-    .sort((a, b) => new Date(a.next_hearing_date).getTime() - new Date(b.next_hearing_date).getTime());
+    .sort((a, b) => parseLocalDate(a.next_hearing_date).getTime() - parseLocalDate(b.next_hearing_date).getTime());
 
   // Helper to categorize dates
   const getRelativeDateLabel = (dateStr: string) => {
     const today = new Date();
     today.setHours(0,0,0,0);
     
-    const target = new Date(dateStr + 'T00:00:00');
+    const target = parseLocalDate(dateStr);
     const diffTime = target.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
@@ -53,6 +58,33 @@ export const Calendar: React.FC = () => {
     if (diffDays > 0) return `In ${diffDays} days`;
     return `${Math.abs(diffDays)} days ago (Past Due)`;
   };
+
+  // Group cases by next_hearing_date for date-wise timeline view
+  interface GroupedCases {
+    date: string;
+    label: string;
+    isPast: boolean;
+    casesList: Case[];
+  }
+
+  const groupedHearingCases: GroupedCases[] = [];
+
+  hearingCases.forEach(c => {
+    const dateStr = c.next_hearing_date;
+    const existingGroup = groupedHearingCases.find(g => g.date === dateStr);
+    
+    if (existingGroup) {
+      existingGroup.casesList.push(c);
+    } else {
+      const label = getRelativeDateLabel(dateStr);
+      groupedHearingCases.push({
+        date: dateStr,
+        label,
+        isPast: label.includes('ago'),
+        casesList: [c]
+      });
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -107,61 +139,93 @@ export const Calendar: React.FC = () => {
             <CardDescription>Chronological overview of scheduled court occurrences.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {hearingCases.length === 0 ? (
+            {groupedHearingCases.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <CalendarIcon className="mx-auto text-muted-foreground/50 h-10 w-10 mb-2" />
-                <p className="text-sm">No scheduled hearings on the docket.</p>
+                <p className="text-sm font-semibold">No scheduled hearings on the docket.</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {hearingCases.map(c => {
-                  const label = getRelativeDateLabel(c.next_hearing_date);
-                  const isPast = label.includes('ago');
+              <div className="space-y-8 text-left border-l border-border/70 pl-4 ml-2">
+                {groupedHearingCases.map(group => {
+                  const [year, month, day] = group.date.split('-').map(Number);
+                  const formattedDate = new Date(year, month - 1, day).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  });
+
                   return (
-                    <div 
-                      key={c.id} 
-                      onClick={() => navigate(`/case/${c.id}`)}
-                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-xl bg-card/60 hover:border-primary/20 transition-all cursor-pointer hover:shadow-sm ${
-                        isPast ? 'border-rose-500/10 bg-rose-500/5' : ''
-                      }`}
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2.5">
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                            isPast 
-                              ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' 
-                              : label.includes('Today') 
-                              ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
-                              : label.includes('Tomorrow') 
-                              ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
-                              : 'bg-primary/10 text-primary border border-primary/20'
-                          }`}>
-                            {label}
-                          </span>
-                          <span className="text-xs text-muted-foreground">{c.next_hearing_date}</span>
-                        </div>
-                        <h4 className="text-sm font-bold text-foreground mt-1 line-clamp-1">{c.case_title}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{c.court_name}</p>
+                    <div key={group.date} className="relative space-y-3">
+                      {/* Timeline Dot Indicator */}
+                      <div className={`absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-background flex items-center justify-center ${
+                        group.isPast 
+                          ? 'border-rose-500 text-rose-500' 
+                          : group.label.includes('Today') 
+                          ? 'border-emerald-500 text-emerald-500'
+                          : 'border-primary text-primary'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          group.isPast 
+                            ? 'bg-rose-500' 
+                            : group.label.includes('Today') 
+                            ? 'bg-emerald-500 animate-ping'
+                            : 'bg-primary'
+                        }`} />
                       </div>
 
-                      <div className="mt-3 sm:mt-0 flex items-center justify-between sm:justify-end space-x-4">
-                        <div className="flex flex-col text-right sm:items-end">
-                          <Badge
-                            variant={
-                              c.status === 'Active'
-                                ? 'success'
-                                : c.status === 'Completed'
-                                ? 'info'
-                                : c.status === 'Delayed'
-                                ? 'warning'
-                                : 'error'
-                            }
+                      {/* Group Header */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-xs font-black text-foreground font-mono uppercase tracking-wider">{formattedDate}</h3>
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                          group.isPast 
+                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' 
+                            : group.label.includes('Today') 
+                            ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
+                            : group.label.includes('Tomorrow') 
+                            ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
+                            : 'bg-primary/10 text-primary border border-primary/20'
+                        }`}>
+                          {group.label}
+                        </span>
+                      </div>
+
+                      {/* Group Cases List */}
+                      <div className="space-y-3">
+                        {group.casesList.map(c => (
+                          <div 
+                            key={c.id} 
+                            onClick={() => navigate(`/case/${c.id}`)}
+                            className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border/70 rounded-xl bg-card/50 hover:border-primary/30 hover:bg-card hover:shadow-md transition-all duration-300 cursor-pointer ${
+                              group.isPast ? 'hover:border-rose-500/30' : ''
+                            }`}
                           >
-                            {c.status}
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">{c.case_number || 'NO #'}</span>
-                        </div>
-                        <ChevronRight size={18} className="text-muted-foreground/60 hidden sm:block" />
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-bold text-foreground line-clamp-1">{c.case_title}</h4>
+                              <p className="text-xs text-muted-foreground line-clamp-1">{c.court_name}</p>
+                            </div>
+
+                            <div className="mt-3 sm:mt-0 flex items-center justify-between sm:justify-end space-x-4">
+                              <div className="flex flex-col text-right sm:items-end">
+                                <Badge
+                                  variant={
+                                    c.status === 'Active'
+                                      ? 'success'
+                                      : c.status === 'Completed'
+                                      ? 'info'
+                                      : c.status === 'Delayed'
+                                      ? 'warning'
+                                      : 'error'
+                                  }
+                                >
+                                  {c.status}
+                                </Badge>
+                                <span className="text-[10px] text-muted-foreground mt-1 uppercase font-semibold">{c.case_number || 'NO #'}</span>
+                              </div>
+                              <ChevronRight size={18} className="text-muted-foreground/60 hidden sm:block" />
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   );
