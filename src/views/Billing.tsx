@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/db';
-import type { Invoice } from '../lib/db';
+import type { Invoice, Expense } from '../lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -26,6 +26,23 @@ export const Billing: React.FC = () => {
 
   // Invoice generator modal state
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
+  const [previewExpenses, setPreviewExpenses] = useState<Expense[]>([]);
+
+  useEffect(() => {
+    if (!previewInvoice) {
+      setPreviewExpenses([]);
+      return;
+    }
+    const loadInvoiceExpenses = async () => {
+      try {
+        const data = await db.getExpensesByCaseId(previewInvoice.case_id);
+        setPreviewExpenses(data);
+      } catch (err) {
+        console.error('Failed to load expenses for invoice:', err);
+      }
+    };
+    loadInvoiceExpenses();
+  }, [previewInvoice]);
 
   const fetchInvoices = async () => {
     try {
@@ -340,12 +357,26 @@ export const Billing: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr>
                   <td className="py-3.5">
-                    <p className="font-bold text-slate-900 dark:text-slate-100">{previewInvoice.title}</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{previewInvoice.title} (Base Fee)</p>
                     <p className="text-slate-500 text-[10px] mt-0.5">Counsel representation for scheduled appearance / litigation support.</p>
                   </td>
                   <td className="py-3.5 text-right text-slate-500">1.0</td>
-                  <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">${Number(previewInvoice.amount).toFixed(2)}</td>
+                  <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100 font-mono">
+                    ${(Number(previewInvoice.amount) - previewExpenses.filter(e => e.invoice_id === previewInvoice.id).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
+                  </td>
                 </tr>
+                {previewExpenses
+                  .filter(e => e.invoice_id === previewInvoice.id)
+                  .map(exp => (
+                    <tr key={exp.id}>
+                      <td className="py-3.5">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{exp.title}</p>
+                        <p className="text-slate-500 text-[10px] mt-0.5">{exp.category} Disbursement ({exp.date})</p>
+                      </td>
+                      <td className="py-3.5 text-right text-slate-500">1.0</td>
+                      <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100 font-mono">${exp.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
 

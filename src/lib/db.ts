@@ -53,6 +53,19 @@ export interface Invoice {
   client?: Client;
 }
 
+export interface Expense {
+  id: string;
+  case_id: string;
+  client_id: string;
+  invoice_id?: string;
+  title: string;
+  amount: number;
+  category: 'Travel' | 'Court Fees' | 'Clerk Fees' | 'Photocopies' | 'Miscellaneous';
+  date: string;
+  status: 'Billed' | 'Unbilled';
+  created_at: string;
+}
+
 // Generate dynamic dates for premium mock data
 const getRelativeDate = (offsetDays: number) => {
   const date = new Date();
@@ -221,6 +234,42 @@ const MOCK_INVOICES: Invoice[] = [
   }
 ];
 
+const MOCK_EXPENSES: Expense[] = [
+  {
+    id: 'exp1',
+    case_id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    title: 'Filing fees for summary motion',
+    amount: 350.00,
+    category: 'Court Fees',
+    date: getRelativeDate(-8),
+    status: 'Unbilled',
+    created_at: new Date(Date.now() - 8 * 86400000).toISOString()
+  },
+  {
+    id: 'exp2',
+    case_id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    title: 'Travel reimbursement - Newark Court appearance',
+    amount: 75.00,
+    category: 'Travel',
+    date: getRelativeDate(-4),
+    status: 'Unbilled',
+    created_at: new Date(Date.now() - 4 * 86400000).toISOString()
+  },
+  {
+    id: 'exp3',
+    case_id: 'case2-uuid',
+    client_id: 'c2-uuid',
+    title: 'Certified deposition copy printing charges',
+    amount: 120.00,
+    category: 'Photocopies',
+    date: getRelativeDate(-5),
+    status: 'Unbilled',
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString()
+  }
+];
+
 // Helper to seed localStorage mock data
 const initLocalStorage = () => {
   if (!localStorage.getItem('adv_clients')) {
@@ -237,6 +286,9 @@ const initLocalStorage = () => {
   }
   if (!localStorage.getItem('adv_invoices')) {
     localStorage.setItem('adv_invoices', JSON.stringify(MOCK_INVOICES));
+  }
+  if (!localStorage.getItem('adv_expenses')) {
+    localStorage.setItem('adv_expenses', JSON.stringify(MOCK_EXPENSES));
   }
 };
 
@@ -300,6 +352,11 @@ export const db = {
       const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
       const filteredInvoices = invoices.filter((inv: Invoice) => inv.client_id !== id);
       localStorage.setItem('adv_invoices', JSON.stringify(filteredInvoices));
+
+      // Cascade delete expenses associated with this client
+      const expenses = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const filteredExpenses = expenses.filter((exp: Expense) => exp.client_id !== id);
+      localStorage.setItem('adv_expenses', JSON.stringify(filteredExpenses));
     }
   },
 
@@ -441,6 +498,11 @@ export const db = {
       const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
       const filteredInvoices = invoices.filter((inv: Invoice) => inv.case_id !== id);
       localStorage.setItem('adv_invoices', JSON.stringify(filteredInvoices));
+
+      // Cascade delete related expenses
+      const expenses = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const filteredExpenses = expenses.filter((exp: Expense) => exp.case_id !== id);
+      localStorage.setItem('adv_expenses', JSON.stringify(filteredExpenses));
     }
   },
 
@@ -616,6 +678,78 @@ export const db = {
       const invoices: Invoice[] = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
       const updated = invoices.map(inv => inv.id === id ? { ...inv, status } : inv);
       localStorage.setItem('adv_invoices', JSON.stringify(updated));
+    }
+  },
+
+  // Expenses / Disbursements Actions
+  async getExpensesByCaseId(caseId: string): Promise<Expense[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('case_id', caseId)
+        .order('date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      const expenses: Expense[] = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      return expenses
+        .filter(exp => exp.case_id === caseId)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+  },
+
+  async createExpense(expense: Omit<Expense, 'id' | 'status' | 'created_at'>): Promise<Expense> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert([{ ...expense, status: 'Unbilled' }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const expenses = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const newExpense: Expense = {
+        ...expense,
+        id: 'expense-' + Math.random().toString(36).substr(2, 9),
+        status: 'Unbilled',
+        created_at: new Date().toISOString()
+      };
+      expenses.push(newExpense);
+      localStorage.setItem('adv_expenses', JSON.stringify(expenses));
+      return newExpense;
+    }
+  },
+
+  async deleteExpense(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const expenses: Expense[] = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const filtered = expenses.filter(exp => exp.id !== id);
+      localStorage.setItem('adv_expenses', JSON.stringify(filtered));
+    }
+  },
+
+  async markExpensesAsBilled(expenseIds: string[], invoiceId: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('expenses')
+        .update({ status: 'Billed', invoice_id: invoiceId })
+        .in('id', expenseIds);
+      if (error) throw error;
+    } else {
+      const expenses: Expense[] = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const updated = expenses.map(exp => 
+        expenseIds.includes(exp.id) ? { ...exp, status: 'Billed' as const, invoice_id: invoiceId } : exp
+      );
+      localStorage.setItem('adv_expenses', JSON.stringify(updated));
     }
   }
 };

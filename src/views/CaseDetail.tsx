@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../lib/db';
-import type { Case, CaseUpdate, Document, Invoice } from '../lib/db';
+import type { Case, CaseUpdate, Document, Invoice, Expense } from '../lib/db';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
@@ -9,6 +9,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
 import { Modal } from '../components/ui/Modal';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import {
   ChevronLeft,
   BookOpen,
@@ -25,7 +26,8 @@ import {
   ChevronDown,
   Check,
   DollarSign,
-  Receipt
+  Receipt,
+  Trash2
 } from 'lucide-react';
 
 export const CaseDetail: React.FC = () => {
@@ -72,6 +74,15 @@ export const CaseDetail: React.FC = () => {
   const [submittingInvoice, setSubmittingInvoice] = useState(false);
   const [activeInvoice, setActiveInvoice] = useState<Invoice | null>(null);
 
+  // Expenses / Disbursements States
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expTitle, setExpTitle] = useState('');
+  const [expAmount, setExpAmount] = useState('');
+  const [expCategory, setExpCategory] = useState<Expense['category']>('Travel');
+  const [expDate, setExpDate] = useState(new Date().toISOString().split('T')[0]);
+  const [submittingExpense, setSubmittingExpense] = useState(false);
+  const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
+
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
@@ -96,14 +107,16 @@ export const CaseDetail: React.FC = () => {
       setHearingDate(caseData.next_hearing_date || '');
       setDescriptionInput(caseData.description || '');
 
-      const [updatesData, docsData, invoicesData] = await Promise.all([
+      const [updatesData, docsData, invoicesData, expensesData] = await Promise.all([
         db.getUpdatesByCaseId(id),
         db.getDocumentsByCaseId(id),
-        db.getInvoicesByCaseId(id)
+        db.getInvoicesByCaseId(id),
+        db.getExpensesByCaseId(id)
       ]);
       setUpdates(updatesData);
       setDocuments(docsData);
       setInvoices(invoicesData);
+      setExpenses(expensesData);
     } catch (err) {
       console.error('Error fetching details:', err);
       toast('Failed to load case specifics', 'error');
@@ -148,22 +161,32 @@ export const CaseDetail: React.FC = () => {
     }
     setSubmittingInvoice(true);
     try {
-      await db.createInvoice({
+      const selectedExpensesList = expenses.filter(e => selectedExpenseIds.includes(e.id));
+      const expensesTotal = selectedExpensesList.reduce((sum, e) => sum + e.amount, 0);
+      const totalInvoiceAmount = parseFloat(invAmount) + expensesTotal;
+
+      const newInvoice = await db.createInvoice({
         case_id: id,
         client_id: kase.client_id,
         title: invTitle.trim(),
-        amount: parseFloat(invAmount),
+        amount: totalInvoiceAmount,
         status: 'Unpaid',
         due_date: invDueDate
       });
+
+      if (selectedExpenseIds.length > 0) {
+        await db.markExpensesAsBilled(selectedExpenseIds, newInvoice.id);
+      }
+
       setInvTitle('');
       setInvAmount('');
       setInvDueDate('');
+      setSelectedExpenseIds([]);
       toast('Invoice generated successfully!', 'success');
       
       await db.createUpdate({
         case_id: id,
-        update_text: `System: New invoice created - "${invTitle}" for $${parseFloat(invAmount).toFixed(2)}.`,
+        update_text: `System: New invoice created - "${invTitle}" for $${totalInvoiceAmount.toFixed(2)} (includes $${expensesTotal.toFixed(2)} disbursements).`,
         added_by: user?.email || 'System'
       });
       fetchCaseDetails();
@@ -282,6 +305,60 @@ export const CaseDetail: React.FC = () => {
     } catch (err) {
       toast('Failed to upload document', 'error');
       setSubmittingDoc(false);
+    }
+  };
+
+  const handleLogExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id || !kase || !expTitle.trim() || !expAmount) return;
+    setSubmittingExpense(true);
+    try {
+      await db.createExpense({
+        case_id: id,
+        client_id: kase.client_id,
+        title: expTitle.trim(),
+        amount: parseFloat(expAmount),
+        category: expCategory,
+        date: expDate
+      });
+      setExpTitle('');
+      setExpAmount('');
+      setExpCategory('Travel');
+      setExpDate(new Date().toISOString().split('T')[0]);
+      toast('Expense logged successfully!', 'success');
+      
+      // Auto post a note to the timeline
+      await db.createUpdate({
+        case_id: id,
+        update_text: `System: Logged case expense (${expCategory}) - "${expTitle.trim()}" for $${parseFloat(expAmount).toFixed(2)}.`,
+        added_by: user?.email || 'System'
+      });
+      
+      fetchCaseDetails();
+    } catch (err: any) {
+      toast(err.message || 'Failed to log expense', 'error');
+    } finally {
+      setSubmittingExpense(false);
+    }
+  };
+
+  const handleDeleteExpense = async (expenseId: string, title: string) => {
+    if (window.confirm(`Are you sure you want to delete expense "${title}"?`)) {
+      try {
+        await db.deleteExpense(expenseId);
+        toast('Expense deleted', 'success');
+        
+        // Auto post a note to the timeline
+        await db.createUpdate({
+          case_id: id || '',
+          update_text: `System: Deleted case expense - "${title}".`,
+          added_by: user?.email || 'System'
+        });
+        
+        fetchCaseDetails();
+      } catch (err) {
+        toast('Failed to delete expense', 'error');
+      }
     }
   };
 
@@ -405,7 +482,7 @@ export const CaseDetail: React.FC = () => {
 
       {/* Tabs Layout */}
       <Tabs defaultValue="details">
-        <TabsList className="bg-muted/80 p-1 w-full max-w-lg grid grid-cols-4">
+        <TabsList className="bg-muted/80 p-1 w-full max-w-2xl grid grid-cols-5">
           <TabsTrigger value="details" className="flex items-center justify-center space-x-2">
             <BookOpen size={16} />
             <span>Details</span>
@@ -417,6 +494,10 @@ export const CaseDetail: React.FC = () => {
           <TabsTrigger value="documents" className="flex items-center justify-center space-x-2">
             <FileText size={16} />
             <span>Documents</span>
+          </TabsTrigger>
+          <TabsTrigger value="expenses" className="flex items-center justify-center space-x-2">
+            <Receipt size={16} />
+            <span>Expenses</span>
           </TabsTrigger>
           <TabsTrigger value="billing" className="flex items-center justify-center space-x-2">
             <DollarSign size={16} />
@@ -690,7 +771,170 @@ export const CaseDetail: React.FC = () => {
           </div>
         </TabsContent>
 
-        {/* Tab 4: Case Billing & Ledger */}
+        {/* Tab 4: Case Expenses & Disbursements */}
+        <TabsContent value="expenses" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Log expense form card */}
+            <Card>
+              <CardHeader className="text-left">
+                <CardTitle>Log Case Expense</CardTitle>
+                <CardDescription>Log court fees, photocopy costs, and travel disbursements.</CardDescription>
+              </CardHeader>
+              <CardContent className="text-left">
+                <form onSubmit={handleLogExpense} className="space-y-4 text-left">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Expense Title <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      placeholder="e.g. Travel to County Supreme Court"
+                      required
+                      value={expTitle}
+                      onChange={e => setExpTitle(e.target.value)}
+                      className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-foreground"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Amount ($) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        placeholder="e.g. 45.00"
+                        required
+                        value={expAmount}
+                        onChange={e => setExpAmount(e.target.value)}
+                        className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-mono text-foreground"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Category
+                      </label>
+                      <select
+                        value={expCategory}
+                        onChange={e => setExpCategory(e.target.value as Expense['category'])}
+                        className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary font-semibold"
+                      >
+                        <option value="Travel">Travel</option>
+                        <option value="Court Fees">Court Fees</option>
+                        <option value="Clerk Fees">Clerk Fees</option>
+                        <option value="Photocopies">Photocopies</option>
+                        <option value="Miscellaneous">Misc</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Expense Date
+                    </label>
+                    <input
+                      type="date"
+                      value={expDate}
+                      onChange={e => setExpDate(e.target.value)}
+                      className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-mono font-medium text-foreground"
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={submittingExpense} className="w-full flex items-center justify-center space-x-2">
+                    <Plus size={16} />
+                    <span>Log Expense</span>
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Expenses List & Summary Table */}
+            <Card className="md:col-span-2">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 gap-4 text-left">
+                <div>
+                  <CardTitle>Disbursement Ledger</CardTitle>
+                  <CardDescription>Ledger of case expenditures and billing statuses.</CardDescription>
+                </div>
+                
+                {/* Mini Stat Cards */}
+                <div className="flex gap-2">
+                  <div className="px-3 py-1.5 bg-muted/60 border border-border rounded-lg text-center min-w-[70px]">
+                    <span className="block text-[9px] font-bold text-muted-foreground uppercase">Unbilled</span>
+                    <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 font-mono">
+                      ${expenses.filter(e => e.status === 'Unbilled').reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="px-3 py-1.5 bg-muted/60 border border-border rounded-lg text-center min-w-[70px]">
+                    <span className="block text-[9px] font-bold text-muted-foreground uppercase">Billed</span>
+                    <span className="text-xs font-extrabold text-foreground font-mono">
+                      ${expenses.filter(e => e.status === 'Billed').reduce((sum, e) => sum + e.amount, 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {expenses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-10 text-center">No disbursements logged for this case file.</p>
+                ) : (
+                  <div className="w-full overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Amount</TableHead>
+                          <TableHead className="text-right"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody className="text-left">
+                        {expenses.map(exp => (
+                          <TableRow key={exp.id}>
+                            <TableCell className="text-xs font-mono font-medium text-muted-foreground">
+                              {exp.date}
+                            </TableCell>
+                            <TableCell className="font-bold text-foreground max-w-[200px] truncate" title={exp.title}>
+                              {exp.title}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-[10px] uppercase font-bold">
+                                {exp.category}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={exp.status === 'Billed' ? 'success' : 'warning'}>
+                                {exp.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-black text-foreground font-mono text-xs">
+                              ${exp.amount.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={exp.status === 'Billed'}
+                                onClick={() => handleDeleteExpense(exp.id, exp.title)}
+                                className="h-8 w-8 p-0 text-muted-foreground hover:text-rose-600 disabled:opacity-30 disabled:hover:bg-transparent"
+                                title="Delete Expense"
+                              >
+                                <Trash2 size={13} />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Tab 5: Case Billing & Ledger */}
         <TabsContent value="billing" className="space-y-6">
           <div className="grid gap-6 md:grid-cols-3">
             {/* Log charge form card */}
@@ -740,6 +984,65 @@ export const CaseDetail: React.FC = () => {
                       className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-medium font-mono text-foreground"
                     />
                   </div>
+
+                  {/* Unbilled Expenses select */}
+                  {expenses.filter(e => e.status === 'Unbilled').length > 0 && (
+                    <div className="space-y-2 border-t border-border/50 pt-4">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide block">
+                        Include Unbilled Expenses:
+                      </label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto border border-border bg-background p-2 rounded-lg scrollbar-hide">
+                        {expenses
+                          .filter(e => e.status === 'Unbilled')
+                          .map(exp => {
+                            const isChecked = selectedExpenseIds.includes(exp.id);
+                            return (
+                              <label key={exp.id} className="flex items-start space-x-2.5 text-xs p-1.5 rounded hover:bg-muted/40 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => {
+                                    if (isChecked) {
+                                      setSelectedExpenseIds(prev => prev.filter(id => id !== exp.id));
+                                    } else {
+                                      setSelectedExpenseIds(prev => [...prev, exp.id]);
+                                    }
+                                  }}
+                                  className="mt-0.5 rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between font-bold text-foreground">
+                                    <span className="truncate max-w-[120px]">{exp.title}</span>
+                                    <span className="font-mono text-right font-black text-[10px]">${exp.amount.toFixed(2)}</span>
+                                  </div>
+                                  <span className="text-[10px] text-muted-foreground font-semibold uppercase">{exp.category} • {exp.date}</span>
+                                </div>
+                              </label>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display Dynamic Invoice Sum Calculation */}
+                  {selectedExpenseIds.length > 0 && (
+                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs space-y-1">
+                      <div className="flex justify-between font-medium">
+                        <span>Base Fee:</span>
+                        <span className="font-mono">${(parseFloat(invAmount) || 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-medium text-amber-600 dark:text-amber-400">
+                        <span>Disbursements ({selectedExpenseIds.length} items):</span>
+                        <span className="font-mono">+${expenses.filter(e => selectedExpenseIds.includes(e.id)).reduce((sum, e) => sum + e.amount, 0).toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-black text-foreground border-t border-border pt-1.5 mt-1 text-sm">
+                        <span>Total Invoiced Sum:</span>
+                        <span className="font-mono text-primary font-bold">
+                          ${((parseFloat(invAmount) || 0) + expenses.filter(e => selectedExpenseIds.includes(e.id)).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
                   <Button type="submit" disabled={submittingInvoice} className="w-full flex items-center justify-center space-x-2">
                     <Plus size={16} />
@@ -1145,12 +1448,26 @@ export const CaseDetail: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 <tr>
                   <td className="py-3.5">
-                    <p className="font-bold text-slate-900 dark:text-slate-100">{activeInvoice.title}</p>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">{activeInvoice.title} (Base Fee)</p>
                     <p className="text-slate-500 text-[10px] mt-0.5">Counsel representation for scheduled appearance / litigation support.</p>
                   </td>
                   <td className="py-3.5 text-right text-slate-500">1.0</td>
-                  <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">${Number(activeInvoice.amount).toFixed(2)}</td>
+                  <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
+                    ${(Number(activeInvoice.amount) - expenses.filter(e => e.invoice_id === activeInvoice.id).reduce((sum, e) => sum + e.amount, 0)).toFixed(2)}
+                  </td>
                 </tr>
+                {expenses
+                  .filter(e => e.invoice_id === activeInvoice.id)
+                  .map(exp => (
+                    <tr key={exp.id}>
+                      <td className="py-3.5">
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{exp.title}</p>
+                        <p className="text-slate-500 text-[10px] mt-0.5">{exp.category} Disbursement ({exp.date})</p>
+                      </td>
+                      <td className="py-3.5 text-right text-slate-500">1.0</td>
+                      <td className="py-3.5 text-right font-bold text-slate-900 dark:text-slate-100">${exp.amount.toFixed(2)}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
 
