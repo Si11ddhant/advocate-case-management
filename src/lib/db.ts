@@ -433,6 +433,29 @@ export const db = {
     }
   },
 
+  async updateLawyer(id: string, lawyer: Omit<Lawyer, 'id' | 'created_at'>): Promise<Lawyer> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('lawyers')
+        .update({ ...lawyer })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const lawyers = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const updatedLawyers = lawyers.map((l: Lawyer) => {
+        if (l.id === id) {
+          return { ...l, ...lawyer };
+        }
+        return l;
+      });
+      localStorage.setItem('adv_lawyers', JSON.stringify(updatedLawyers));
+      return updatedLawyers.find((l: Lawyer) => l.id === id);
+    }
+  },
+
   async deleteLawyer(id: string): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase

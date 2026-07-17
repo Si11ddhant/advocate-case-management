@@ -7,12 +7,13 @@ import { Modal } from '../components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 import { Badge } from '../components/ui/Badge';
 import { useToast } from '../context/ToastContext';
-import { Shield, UserPlus, Phone, Mail, Search, Trash2 } from 'lucide-react';
+import { Shield, UserPlus, Phone, Mail, Search, Trash2, Pencil } from 'lucide-react';
 
 export const Lawyers: React.FC = () => {
   const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingLawyer, setEditingLawyer] = useState<Lawyer | null>(null);
   const { toast } = useToast();
 
   // Search filter state
@@ -43,6 +44,7 @@ export const Lawyers: React.FC = () => {
   }, []);
 
   const handleOpenModal = () => {
+    setEditingLawyer(null);
     setName('');
     setRole('Associate Advocate');
     setPhone('');
@@ -50,7 +52,16 @@ export const Lawyers: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleAddLawyer = async (e: React.FormEvent) => {
+  const handleOpenEditModal = (lawyer: Lawyer) => {
+    setEditingLawyer(lawyer);
+    setName(lawyer.name);
+    setRole(lawyer.role);
+    setPhone(lawyer.phone || '');
+    setEmail(lawyer.email);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveLawyer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       toast('Lawyer Name is required', 'warning');
@@ -62,17 +73,28 @@ export const Lawyers: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      await db.createLawyer({
-        name,
-        role,
-        phone,
-        email,
-      });
-      toast(`Advocate profile for "${name}" registered successfully!`, 'success');
+      if (editingLawyer) {
+        await db.updateLawyer(editingLawyer.id, {
+          name,
+          role,
+          phone,
+          email,
+        });
+        toast(`Advocate profile for "${name}" updated successfully!`, 'success');
+      } else {
+        await db.createLawyer({
+          name,
+          role,
+          phone,
+          email,
+        });
+        toast(`Advocate profile for "${name}" registered successfully!`, 'success');
+      }
       setIsModalOpen(false);
+      setEditingLawyer(null);
       fetchLawyers();
     } catch (err: any) {
-      toast(err.message || 'Failed to register advocate', 'error');
+      toast(err.message || 'Failed to save advocate details', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -196,15 +218,26 @@ export const Lawyers: React.FC = () => {
                         })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteLawyer(l.id, l.name)}
-                          className="h-8 w-8 p-0 text-rose-500 hover:bg-rose-500/10 rounded-lg hover:text-rose-600 transition-colors"
-                          title="Remove advocate"
-                        >
-                          <Trash2 size={15} />
-                        </Button>
+                        <div className="flex items-center justify-end space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenEditModal(l)}
+                            className="h-8 w-8 p-0 text-slate-500 hover:bg-slate-500/10 rounded-lg hover:text-slate-700 transition-colors"
+                            title="Edit advocate"
+                          >
+                            <Pencil size={14} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteLawyer(l.id, l.name)}
+                            className="h-8 w-8 p-0 text-rose-500 hover:bg-rose-500/10 rounded-lg hover:text-rose-600 transition-colors"
+                            title="Remove advocate"
+                          >
+                            <Trash2 size={15} />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -215,23 +248,29 @@ export const Lawyers: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Modal - New Advocate Registration */}
+      {/* Modal - New/Edit Advocate Profile */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Register Firm Advocate"
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingLawyer(null);
+        }}
+        title={editingLawyer ? 'Edit Advocate Profile' : 'Register Firm Advocate'}
         footer={
           <div className="flex justify-end space-x-2 w-full">
-            <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
+            <Button variant="ghost" onClick={() => {
+              setIsModalOpen(false);
+              setEditingLawyer(null);
+            }}>
               Cancel
             </Button>
-            <Button onClick={handleAddLawyer} disabled={submitting}>
-              {submitting ? 'Registering...' : 'Register Profile'}
+            <Button onClick={handleSaveLawyer} disabled={submitting}>
+              {submitting ? (editingLawyer ? 'Saving...' : 'Registering...') : (editingLawyer ? 'Save Changes' : 'Register Profile')}
             </Button>
           </div>
         }
       >
-        <form onSubmit={handleAddLawyer} className="space-y-4 text-left">
+        <form onSubmit={handleSaveLawyer} className="space-y-4 text-left">
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Full Name <span className="text-rose-500">*</span>
