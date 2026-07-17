@@ -571,7 +571,10 @@ export const Dashboard: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                           <h4 className="text-sm font-bold text-foreground truncate" title={c.case_title}>{c.case_title}</h4>
-                          <p className="text-xs text-muted-foreground truncate" title={c.court_name}>{c.court_name || 'N/A'}</p>
+                          <p className="text-xs text-muted-foreground truncate" title={c.court_name}>
+                            {c.court_name || 'N/A'}
+                            {c.assigned_lawyer && ` • Advocate: ${c.assigned_lawyer.name}`}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
