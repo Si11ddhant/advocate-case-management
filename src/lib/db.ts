@@ -1,0 +1,1043 @@
+import { supabase, isSupabaseConfigured } from './supabase';
+
+export interface Client {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  client_type?: 'Individual' | 'Company' | 'Industrial';
+  created_at: string;
+}
+
+export interface Lawyer {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+export interface Case {
+  id: string;
+  client_id: string;
+  case_title: string;
+  court_name: string;
+  case_number: string;
+  status: 'Active' | 'Completed' | 'Delayed' | 'Cancelled' | 'Hold';
+  next_hearing_date: string;
+  description: string;
+  assigned_lawyer_id?: string;
+  created_at: string;
+  client?: Client; // Joined client object
+  assigned_lawyer?: Lawyer; // Joined lawyer object
+}
+
+export interface CaseUpdate {
+  id: string;
+  case_id: string;
+  update_text: string;
+  added_by: string;
+  created_at: string;
+}
+
+export interface Document {
+  id: string;
+  case_id: string;
+  file_name: string;
+  file_url: string;
+  document_category: 'Evidence' | 'Pleading' | 'Order' | 'Misc';
+  uploaded_at: string;
+}
+
+export interface Invoice {
+  id: string;
+  case_id: string;
+  client_id: string;
+  invoice_number: string;
+  title: string;
+  amount: number;
+  status: 'Paid' | 'Unpaid' | 'Overdue';
+  due_date: string;
+  created_at: string;
+  case?: Case;
+  client?: Client;
+}
+
+export interface Expense {
+  id: string;
+  case_id: string;
+  client_id: string;
+  invoice_id?: string;
+  title: string;
+  amount: number;
+  category: 'Travel' | 'Court Fees' | 'Clerk Fees' | 'Photocopies' | 'Miscellaneous';
+  date: string;
+  status: 'Billed' | 'Unbilled';
+  created_at: string;
+}
+
+// Generate dynamic dates for premium mock data
+const getRelativeDate = (offsetDays: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  return date.toISOString().split('T')[0];
+};
+
+const MOCK_CLIENTS: Client[] = [
+  {
+    id: 'c1-uuid',
+    name: 'Individual',
+    phone: '+91 99999 99999',
+    email: 'individual@client.com',
+    address: 'India Representative Address',
+    client_type: 'Individual',
+    created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
+  },
+  {
+    id: 'c2-uuid',
+    name: 'Company',
+    phone: '+91 22 2278 5000',
+    email: 'company@client.com',
+    address: 'Corporate Headquarters, India',
+    client_type: 'Company',
+    created_at: new Date(Date.now() - 25 * 86400000).toISOString(),
+  },
+  {
+    id: 'c3-uuid',
+    name: 'Industrial',
+    phone: '+91 44 2322 4433',
+    email: 'industrial@client.com',
+    address: 'Industrial Zone Complex, India',
+    client_type: 'Industrial',
+    created_at: new Date(Date.now() - 40 * 86400000).toISOString(),
+  }
+];
+
+const MOCK_LAWYERS: Lawyer[] = [
+  {
+    id: 'l1-uuid',
+    name: 'Advocate Abhishek Singh',
+    email: 'abhishek.singh@firm.com',
+    phone: '+91 98110 12345',
+    role: 'Senior Partner',
+    created_at: new Date(Date.now() - 60 * 86400000).toISOString()
+  },
+  {
+    id: 'l2-uuid',
+    name: 'Advocate Priya Sharma',
+    email: 'priya.sharma@firm.com',
+    phone: '+91 98120 54321',
+    role: 'Associate Advocate',
+    created_at: new Date(Date.now() - 45 * 86400000).toISOString()
+  },
+  {
+    id: 'l3-uuid',
+    name: 'Advocate Rahul Verma',
+    email: 'rahul.verma@firm.com',
+    phone: '+91 98130 98765',
+    role: 'Junior Associate',
+    created_at: new Date(Date.now() - 30 * 86400000).toISOString()
+  }
+];
+
+const MOCK_CASES: Case[] = [
+  {
+    id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Kesavananda Bharati v. State of Kerala',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Civil) 135/1970',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'Landmark constitutional case regarding the power of Parliament to amend the Constitution. Reviewing the Basic Structure Doctrine.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
+  },
+  {
+    id: 'case2-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Maneka Gandhi v. Union of India',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Civil) 112/1977',
+    status: 'Delayed',
+    next_hearing_date: getRelativeDate(2),
+    description: 'Challenge to personal liberty and arbitrary administrative action regarding passport confiscation under Article 21.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
+  },
+  {
+    id: 'case3-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Shayara Bano v. Union of India (Triple Talaq Case)',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Civil) 118/2016',
+    status: 'Completed',
+    next_hearing_date: getRelativeDate(-5),
+    description: 'Constitutional challenge regarding validity of Talaq-e-Biddat (Triple Talaq). Disposed following final judgment declaring it unconstitutional.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
+  },
+  {
+    id: 'case4-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Navtej Singh Johar v. Union of India',
+    court_name: 'Supreme Court of India',
+    case_number: 'WP (Criminal) 76/2016',
+    status: 'Cancelled',
+    next_hearing_date: '',
+    description: 'Petition challenging Section 377 of the Indian Penal Code. Closed following historical decriminalization of consensual relationships.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    id: 'case5-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Mohammad Salim v. State of Uttarakhand',
+    court_name: 'Bombay High Court',
+    case_number: 'PIL 12/2017',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'Writ petition concerning the legal status of the Rivers Ganga and Yamuna as living entities.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
+  },
+  {
+    id: 'case6-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'State of Maharashtra v. Salman Khan',
+    court_name: 'Bombay High Court',
+    case_number: 'CRA 451/2015',
+    status: 'Hold',
+    next_hearing_date: getRelativeDate(10),
+    description: 'Appellate proceedings review of the Sessions Court verdict in the 2002 hit-and-run accident litigation.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 14 * 86400000).toISOString(),
+  },
+  {
+    id: 'case7-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'National Legal Services Authority v. Union of India',
+    court_name: 'Delhi High Court',
+    case_number: 'WP (Civil) 400/2012',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'Litigation petition seeking rights and recognition for transgender individuals as a third gender under law.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
+  },
+  {
+    id: 'case8-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'State of Delhi v. Sushil Kumar',
+    court_name: 'Delhi High Court',
+    case_number: 'CRL.A 89/2021',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(4),
+    description: 'Criminal trial review involving stadium altercation incidents under Section 302 of IPC.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 6 * 86400000).toISOString(),
+  },
+  {
+    id: 'case9-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Indian Express v. Madras Union of Journalists',
+    court_name: 'Madras High Court',
+    case_number: 'Writ Appeal 121/2018',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(8),
+    description: 'Labor disputes regarding wage board structures and working standards for journalists.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+  },
+  {
+    id: 'case10-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Ramesh Chandra v. State of U.P.',
+    court_name: 'Allahabad High Court',
+    case_number: 'Writ Tax 768/2022',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(6),
+    description: 'Dispute over tax assessment procedures and procedural violations under State GST Acts.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
+  },
+  {
+    id: 'case11-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Anil Kumar v. Delhi Development Authority',
+    court_name: 'City Civil Court Delhi',
+    case_number: 'CS (OS) 102/2023',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(3),
+    description: 'Property suit seeking declaration and permanent injunction against development authorities.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 9 * 86400000).toISOString(),
+  },
+  {
+    id: 'case12-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Sudhakar Soni v. Municipal Corporation of Greater Mumbai',
+    court_name: 'Civil Court Bombay',
+    case_number: 'LC Suit 4410/2021',
+    status: 'Delayed',
+    next_hearing_date: getRelativeDate(7),
+    description: 'Suit challenging demolition notice served under Section 351 of the MMC Act.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 11 * 86400000).toISOString(),
+  },
+  {
+    id: 'case13-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Kishore Patil v. State of Maharashtra',
+    court_name: 'District Court Pune',
+    case_number: 'Sessions Case 551/2020',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'District sessions trial in land acquisition fraud and criminal conspiracy allegations.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 18 * 86400000).toISOString(),
+  },
+  {
+    id: 'case14-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Ritu Saxena v. Vikram Saxena',
+    court_name: 'Saket District Court',
+    case_number: 'HMA 72/2022',
+    status: 'Hold',
+    next_hearing_date: getRelativeDate(12),
+    description: 'Matrimonial petition seeking maintenance and custody of minor child under Section 24 of Hindu Marriage Act.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 13 * 86400000).toISOString(),
+  },
+  {
+    id: 'case15-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Bangalore Traders v. Apex Logistics',
+    court_name: 'District and Sessions Court Bengaluru',
+    case_number: 'Com. OS 804/2023',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(9),
+    description: 'Commercial suit recovery of dues for breach of cargo supply chains contract terms.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+  {
+    id: 'case16-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Aman Gupta v. State of Punjab',
+    court_name: 'District and Sessions Court Ludhiana',
+    case_number: 'Sessions Trial 110/2021',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'District trial on financial transaction forgery and counterfeit instruments.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 25 * 86400000).toISOString(),
+  }
+];
+
+const MOCK_UPDATES: CaseUpdate[] = [
+  {
+    id: 'up1',
+    case_id: 'case1-uuid',
+    update_text: 'Filed rejoinder affidavit in response to Kerala State Government counter-affidavit.',
+    added_by: 'advocate@example.com',
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    id: 'up2',
+    case_id: 'case1-uuid',
+    update_text: 'Compiled written arguments regarding the limitations of amending power under Article 368.',
+    added_by: 'advocate@example.com',
+    created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+  },
+  {
+    id: 'up3',
+    case_id: 'case2-uuid',
+    update_text: 'Constitutional bench hearing adjourned due to senior counsel schedule overlap.',
+    added_by: 'advocate@example.com',
+    created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
+  }
+];
+
+const MOCK_DOCUMENTS: Document[] = [
+  {
+    id: 'doc1',
+    case_id: 'case1-uuid',
+    file_name: 'Complaint_Filed_Signed.pdf',
+    file_url: '#',
+    document_category: 'Pleading',
+    uploaded_at: new Date(Date.now() - 14 * 86400000).toISOString(),
+  },
+  {
+    id: 'doc2',
+    case_id: 'case1-uuid',
+    file_name: 'Audit_Spreadsheet_Exhibit_A.xlsx',
+    file_url: '#',
+    document_category: 'Evidence',
+    uploaded_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+  {
+    id: 'doc3',
+    case_id: 'case2-uuid',
+    file_name: 'Arrest_Record_Redacted.pdf',
+    file_url: '#',
+    document_category: 'Evidence',
+    uploaded_at: new Date(Date.now() - 9 * 86400000).toISOString(),
+  }
+];
+
+const MOCK_INVOICES: Invoice[] = [
+  {
+    id: 'inv1',
+    case_id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    invoice_number: 'INV-2026-001',
+    title: 'Retainer Fee - Kesavananda Constitutional Briefs Support',
+    amount: 50000.00,
+    status: 'Paid',
+    due_date: getRelativeDate(-10),
+    created_at: new Date(Date.now() - 15 * 86400000).toISOString()
+  },
+  {
+    id: 'inv2',
+    case_id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    invoice_number: 'INV-2026-002',
+    title: 'Senior Advocate Counsel Consultation Fees',
+    amount: 15000.00,
+    status: 'Unpaid',
+    due_date: getRelativeDate(5),
+    created_at: new Date(Date.now() - 3 * 86400000).toISOString()
+  },
+  {
+    id: 'inv3',
+    case_id: 'case2-uuid',
+    client_id: 'c2-uuid',
+    invoice_number: 'INV-2026-003',
+    title: 'Court Appearance - Pleading Writ Representation',
+    amount: 25000.00,
+    status: 'Unpaid',
+    due_date: getRelativeDate(-2),
+    created_at: new Date(Date.now() - 6 * 86400000).toISOString()
+  }
+];
+
+const MOCK_EXPENSES: Expense[] = [
+  {
+    id: 'exp1',
+    case_id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    title: 'Filing fees for constitutional writ petition',
+    amount: 3500.00,
+    category: 'Court Fees',
+    date: getRelativeDate(-8),
+    status: 'Unbilled',
+    created_at: new Date(Date.now() - 8 * 86400000).toISOString()
+  },
+  {
+    id: 'exp2',
+    case_id: 'case1-uuid',
+    client_id: 'c1-uuid',
+    title: 'Travel reimbursement - New Delhi Supreme Court',
+    amount: 4500.00,
+    category: 'Travel',
+    date: getRelativeDate(-4),
+    status: 'Unbilled',
+    created_at: new Date(Date.now() - 4 * 86400000).toISOString()
+  },
+  {
+    id: 'exp3',
+    case_id: 'case2-uuid',
+    client_id: 'c2-uuid',
+    title: 'Certified copy translation charges',
+    amount: 1200.00,
+    category: 'Photocopies',
+    date: getRelativeDate(-5),
+    status: 'Unbilled',
+    created_at: new Date(Date.now() - 5 * 86400000).toISOString()
+  }
+];
+
+// Helper to seed localStorage mock data
+const initLocalStorage = () => {
+  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v6');
+  if (needsSeeding) {
+    localStorage.setItem('adv_clients', JSON.stringify(MOCK_CLIENTS));
+    localStorage.setItem('adv_cases', JSON.stringify(MOCK_CASES));
+    localStorage.setItem('adv_updates', JSON.stringify(MOCK_UPDATES));
+    localStorage.setItem('adv_documents', JSON.stringify(MOCK_DOCUMENTS));
+    localStorage.setItem('adv_invoices', JSON.stringify(MOCK_INVOICES));
+    localStorage.setItem('adv_expenses', JSON.stringify(MOCK_EXPENSES));
+    localStorage.setItem('adv_lawyers', JSON.stringify(MOCK_LAWYERS));
+    localStorage.setItem('adv_seeded_indian_v6', 'true');
+  }
+};
+
+if (!isSupabaseConfigured) {
+  initLocalStorage();
+}
+
+export const db = {
+  // Clients Actions
+  async getClients(): Promise<Client[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.from('clients').select('*').order('name');
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      return JSON.parse(localStorage.getItem('adv_clients') || '[]');
+    }
+  },
+
+  async createClient(client: Omit<Client, 'id' | 'created_at'>): Promise<Client> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('clients')
+        .insert([{ ...client }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const clients = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const newClient: Client = {
+        ...client,
+        id: 'client-' + Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString(),
+      };
+      clients.push(newClient);
+      localStorage.setItem('adv_clients', JSON.stringify(clients));
+      return newClient;
+    }
+  },
+
+  async deleteClient(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const clients = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const filteredClients = clients.filter((c: Client) => c.id !== id);
+      localStorage.setItem('adv_clients', JSON.stringify(filteredClients));
+
+      // Cascade delete client's cases
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const filteredCases = cases.filter((c: Case) => c.client_id !== id);
+      localStorage.setItem('adv_cases', JSON.stringify(filteredCases));
+
+      // Cascade delete invoices associated with this client
+      const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const filteredInvoices = invoices.filter((inv: Invoice) => inv.client_id !== id);
+      localStorage.setItem('adv_invoices', JSON.stringify(filteredInvoices));
+
+      // Cascade delete expenses associated with this client
+      const expenses = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const filteredExpenses = expenses.filter((exp: Expense) => exp.client_id !== id);
+      localStorage.setItem('adv_expenses', JSON.stringify(filteredExpenses));
+    }
+  },
+
+  // Lawyers Actions
+  async getLawyers(): Promise<Lawyer[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.from('lawyers').select('*').order('name');
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      return JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+    }
+  },
+
+  async createLawyer(lawyer: Omit<Lawyer, 'id' | 'created_at'>): Promise<Lawyer> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('lawyers')
+        .insert([{ ...lawyer }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const lawyers = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const newLawyer: Lawyer = {
+        ...lawyer,
+        id: 'lawyer-' + Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString(),
+      };
+      lawyers.push(newLawyer);
+      localStorage.setItem('adv_lawyers', JSON.stringify(lawyers));
+      return newLawyer;
+    }
+  },
+
+  async updateLawyer(id: string, lawyer: Omit<Lawyer, 'id' | 'created_at'>): Promise<Lawyer> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('lawyers')
+        .update({ ...lawyer })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const lawyers = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const updatedLawyers = lawyers.map((l: Lawyer) => {
+        if (l.id === id) {
+          return { ...l, ...lawyer };
+        }
+        return l;
+      });
+      localStorage.setItem('adv_lawyers', JSON.stringify(updatedLawyers));
+      return updatedLawyers.find((l: Lawyer) => l.id === id);
+    }
+  },
+
+  async deleteLawyer(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('lawyers')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const lawyers = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const filteredLawyers = lawyers.filter((l: Lawyer) => l.id !== id);
+      localStorage.setItem('adv_lawyers', JSON.stringify(filteredLawyers));
+
+      // Reset assignment in cases
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updatedCases = cases.map((c: Case) => {
+        if (c.assigned_lawyer_id === id) {
+          const { assigned_lawyer_id, ...rest } = c;
+          return rest;
+        }
+        return c;
+      });
+      localStorage.setItem('adv_cases', JSON.stringify(updatedCases));
+    }
+  },
+
+  async updateCaseAssignment(caseId: string, lawyerId: string | null): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .update({ assigned_lawyer_id: lawyerId })
+        .eq('id', caseId);
+      if (error) throw error;
+    } else {
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updatedCases = cases.map((c: Case) => {
+        if (c.id === caseId) {
+          return { ...c, assigned_lawyer_id: lawyerId || undefined };
+        }
+        return c;
+      });
+      localStorage.setItem('adv_cases', JSON.stringify(updatedCases));
+    }
+  },
+
+  // Cases Actions
+  async getCases(): Promise<Case[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('*, clients (*)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => ({
+        ...item,
+        client: item.clients
+      }));
+    } else {
+      initLocalStorage();
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const clients: Client[] = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const lawyers: Lawyer[] = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      return cases.map(c => ({
+        ...c,
+        client: clients.find(cl => cl.id === c.client_id),
+        assigned_lawyer: lawyers.find(l => l.id === c.assigned_lawyer_id)
+      }));
+    }
+  },
+
+  async getCaseById(id: string): Promise<Case | null> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('cases')
+        .select('*, clients (*)')
+        .eq('id', id)
+        .single();
+      if (error) return null;
+      return {
+        ...data,
+        client: data.clients
+      };
+    } else {
+      initLocalStorage();
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const clients: Client[] = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const lawyers: Lawyer[] = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const c = cases.find(item => item.id === id);
+      if (!c) return null;
+      return {
+        ...c,
+        client: clients.find(cl => cl.id === c.client_id),
+        assigned_lawyer: lawyers.find(l => l.id === c.assigned_lawyer_id)
+      };
+    }
+  },
+
+  async createCase(kase: Omit<Case, 'id' | 'created_at'>): Promise<Case> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('cases')
+        .insert([{ ...kase }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const newCase: Case = {
+        ...kase,
+        id: 'case-' + Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString(),
+      };
+      cases.push(newCase);
+      localStorage.setItem('adv_cases', JSON.stringify(cases));
+      return newCase;
+    }
+  },
+
+  async updateCaseStatus(id: string, status: Case['status']): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .update({ status })
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updated = cases.map(c => c.id === id ? { ...c, status } : c);
+      localStorage.setItem('adv_cases', JSON.stringify(updated));
+    }
+  },
+
+  async updateCaseHearingDate(id: string, next_hearing_date: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .update({ next_hearing_date })
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updated = cases.map(c => c.id === id ? { ...c, next_hearing_date } : c);
+      localStorage.setItem('adv_cases', JSON.stringify(updated));
+    }
+  },
+
+  async updateCaseDescription(id: string, description: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .update({ description })
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updated = cases.map(c => c.id === id ? { ...c, description } : c);
+      localStorage.setItem('adv_cases', JSON.stringify(updated));
+    }
+  },
+
+  async deleteCase(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const filteredCases = cases.filter((c: Case) => c.id !== id);
+      localStorage.setItem('adv_cases', JSON.stringify(filteredCases));
+
+      // Cascade delete related updates
+      const updates = JSON.parse(localStorage.getItem('adv_updates') || '[]');
+      const filteredUpdates = updates.filter((u: CaseUpdate) => u.case_id !== id);
+      localStorage.setItem('adv_updates', JSON.stringify(filteredUpdates));
+
+      // Cascade delete related documents
+      const docs = JSON.parse(localStorage.getItem('adv_documents') || '[]');
+      const filteredDocs = docs.filter((d: Document) => d.case_id !== id);
+      localStorage.setItem('adv_documents', JSON.stringify(filteredDocs));
+
+      // Cascade delete related invoices
+      const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const filteredInvoices = invoices.filter((inv: Invoice) => inv.case_id !== id);
+      localStorage.setItem('adv_invoices', JSON.stringify(filteredInvoices));
+
+      // Cascade delete related expenses
+      const expenses = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const filteredExpenses = expenses.filter((exp: Expense) => exp.case_id !== id);
+      localStorage.setItem('adv_expenses', JSON.stringify(filteredExpenses));
+    }
+  },
+
+  // Updates Actions
+  async getUpdatesByCaseId(caseId: string): Promise<CaseUpdate[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('case_updates')
+        .select('*')
+        .eq('case_id', caseId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      const updates: CaseUpdate[] = JSON.parse(localStorage.getItem('adv_updates') || '[]');
+      return updates
+        .filter(u => u.case_id === caseId)
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+  },
+
+  async createUpdate(update: Omit<CaseUpdate, 'id' | 'created_at'>): Promise<CaseUpdate> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('case_updates')
+        .insert([{ ...update }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const updates = JSON.parse(localStorage.getItem('adv_updates') || '[]');
+      const newUpdate: CaseUpdate = {
+        ...update,
+        id: 'update-' + Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString(),
+      };
+      updates.push(newUpdate);
+      localStorage.setItem('adv_updates', JSON.stringify(updates));
+      return newUpdate;
+    }
+  },
+
+  // Documents Actions
+  async getDocumentsByCaseId(caseId: string): Promise<Document[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('case_id', caseId)
+        .order('uploaded_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      const docs: Document[] = JSON.parse(localStorage.getItem('adv_documents') || '[]');
+      return docs
+        .filter(d => d.case_id === caseId)
+        .sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+    }
+  },
+
+  async uploadDocument(doc: Omit<Document, 'id' | 'uploaded_at'>): Promise<Document> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert([{ ...doc }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const docs = JSON.parse(localStorage.getItem('adv_documents') || '[]');
+      const newDoc: Document = {
+        ...doc,
+        id: 'doc-' + Math.random().toString(36).substr(2, 9),
+        uploaded_at: new Date().toISOString(),
+      };
+      docs.push(newDoc);
+      localStorage.setItem('adv_documents', JSON.stringify(docs));
+      return newDoc;
+    }
+  },
+
+  // Invoices Actions
+  async getInvoices(): Promise<Invoice[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*, cases (*), clients (*)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => ({
+        ...item,
+        case: item.cases,
+        client: item.clients
+      }));
+    } else {
+      initLocalStorage();
+      const invoices: Invoice[] = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const clients: Client[] = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      return invoices.map(inv => ({
+        ...inv,
+        case: cases.find(c => c.id === inv.case_id),
+        client: clients.find(cl => cl.id === inv.client_id)
+      }));
+    }
+  },
+
+  async getInvoicesByCaseId(caseId: string): Promise<Invoice[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('invoices')
+        .select('*, cases (*), clients (*)')
+        .eq('case_id', caseId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(item => ({
+        ...item,
+        case: item.cases,
+        client: item.clients
+      }));
+    } else {
+      initLocalStorage();
+      const invoices: Invoice[] = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const clients: Client[] = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      return invoices
+        .filter(inv => inv.case_id === caseId)
+        .map(inv => ({
+          ...inv,
+          case: cases.find(c => c.id === inv.case_id),
+          client: clients.find(cl => cl.id === inv.client_id)
+        }))
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+  },
+
+  async createInvoice(invoice: Omit<Invoice, 'id' | 'invoice_number' | 'created_at'>): Promise<Invoice> {
+    const invNumber = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert([{ ...invoice, invoice_number: invNumber }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const invoices = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const newInvoice: Invoice = {
+        ...invoice,
+        id: 'invoice-' + Math.random().toString(36).substr(2, 9),
+        invoice_number: invNumber,
+        created_at: new Date().toISOString(),
+      };
+      invoices.push(newInvoice);
+      localStorage.setItem('adv_invoices', JSON.stringify(invoices));
+      return newInvoice;
+    }
+  },
+
+  async updateInvoiceStatus(id: string, status: Invoice['status']): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status })
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const invoices: Invoice[] = JSON.parse(localStorage.getItem('adv_invoices') || '[]');
+      const updated = invoices.map(inv => inv.id === id ? { ...inv, status } : inv);
+      localStorage.setItem('adv_invoices', JSON.stringify(updated));
+    }
+  },
+
+  // Expenses / Disbursements Actions
+  async getExpensesByCaseId(caseId: string): Promise<Expense[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('case_id', caseId)
+        .order('date', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      const expenses: Expense[] = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      return expenses
+        .filter(exp => exp.case_id === caseId)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+  },
+
+  async createExpense(expense: Omit<Expense, 'id' | 'status' | 'created_at'>): Promise<Expense> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('expenses')
+        .insert([{ ...expense, status: 'Unbilled' }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const expenses = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const newExpense: Expense = {
+        ...expense,
+        id: 'expense-' + Math.random().toString(36).substr(2, 9),
+        status: 'Unbilled',
+        created_at: new Date().toISOString()
+      };
+      expenses.push(newExpense);
+      localStorage.setItem('adv_expenses', JSON.stringify(expenses));
+      return newExpense;
+    }
+  },
+
+  async deleteExpense(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const expenses: Expense[] = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const filtered = expenses.filter(exp => exp.id !== id);
+      localStorage.setItem('adv_expenses', JSON.stringify(filtered));
+    }
+  },
+
+  async markExpensesAsBilled(expenseIds: string[], invoiceId: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('expenses')
+        .update({ status: 'Billed', invoice_id: invoiceId })
+        .in('id', expenseIds);
+      if (error) throw error;
+    } else {
+      const expenses: Expense[] = JSON.parse(localStorage.getItem('adv_expenses') || '[]');
+      const updated = expenses.map(exp => 
+        expenseIds.includes(exp.id) ? { ...exp, status: 'Billed' as const, invoice_id: invoiceId } : exp
+      );
+      localStorage.setItem('adv_expenses', JSON.stringify(updated));
+    }
+  }
+};
