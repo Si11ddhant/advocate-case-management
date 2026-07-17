@@ -175,91 +175,91 @@ export const Dashboard: React.FC = () => {
 
       {/* Tomorrow's Hearings Alert Section */}
       {tomorrowsHearings.length > 0 && (
-        <Card className="border border-amber-500/20 bg-gradient-to-br from-amber-500/8 via-amber-500/3 to-transparent relative overflow-hidden backdrop-blur-md rounded-xl shadow-md">
+        <Card className="border border-amber-500/20 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent relative overflow-hidden backdrop-blur-md rounded-xl shadow-lg">
           {/* Neon Glow Element */}
-          <div className="absolute right-0 top-0 w-48 h-48 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute right-0 top-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="p-4 flex items-start space-x-3.5 relative z-10">
-            <div className="bg-gradient-to-tr from-amber-500 to-orange-500 text-white p-2 rounded-xl shadow-md shadow-amber-500/10 flex-shrink-0 animate-pulse mt-0.5">
-              <AlertTriangle size={18} />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              {/* Alert Header layout */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-border/20 pb-2.5 gap-2 text-left">
+          <div className="p-4 flex flex-col lg:flex-row lg:items-stretch gap-5 relative z-10">
+            {/* Left Panel: Header Summary */}
+            <div className="flex flex-col justify-between space-y-4 lg:w-1/3 border-b lg:border-b-0 lg:border-r border-border/20 pb-4 lg:pb-0 lg:pr-5 text-left">
+              <div className="flex items-start space-x-3.5">
+                <div className="bg-gradient-to-tr from-amber-500 to-orange-500 text-white p-2.5 rounded-xl shadow-md flex-shrink-0 animate-pulse mt-0.5">
+                  <AlertTriangle size={18} />
+                </div>
                 <div>
                   <div className="flex items-center space-x-1.5">
-                    <h3 className="text-sm font-black text-foreground tracking-tight">
-                      Hearings Scheduled for Tomorrow
+                    <h3 className="text-xs font-black tracking-wider text-amber-600 dark:text-amber-400 uppercase">
+                      Urgent Alert
                     </h3>
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                     </span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    You have <span className="font-bold text-amber-600 dark:text-amber-400">{tomorrowsHearings.length} court hearing{tomorrowsHearings.length > 1 ? 's' : ''}</span> listed for <span className="font-mono font-bold text-foreground">{tomorrowStr}</span>.
+                  <h4 className="text-base font-black text-foreground tracking-tight mt-0.5 leading-snug">Hearings Listed Tomorrow</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    You have <span className="font-bold text-amber-600 dark:text-amber-400">{tomorrowsHearings.length} court hearing{tomorrowsHearings.length > 1 ? 's' : ''}</span> scheduled for <span className="font-mono font-bold text-foreground">{tomorrowStr}</span>.
                   </p>
                 </div>
-                
-                <Button
-                  onClick={handleSendWhatsAppDigest}
-                  className="h-7.5 px-3 text-[10px] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center space-x-1.5 rounded-lg shadow-sm border-none transition-all duration-300 self-start md:self-auto flex-shrink-0"
-                >
-                  <WhatsAppIcon />
-                  <span>Send Digest via WhatsApp</span>
-                </Button>
               </div>
               
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {tomorrowsHearings.map(c => (
-                  <div 
-                    key={c.id} 
-                    onClick={() => navigate(`/case/${c.id}`)}
-                    className="group p-3 bg-card/30 backdrop-blur-xs border border-border/60 hover:border-amber-500/30 hover:bg-card/85 rounded-lg hover:shadow-md cursor-pointer transition-all duration-300 flex flex-col justify-between text-left"
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[8px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded truncate max-w-[120px]">
-                          {c.case_number || 'NO DOCKET #'}
-                        </span>
-                        <Badge variant="warning" className="text-[8px] px-1.5 py-0">
-                          {c.status}
-                        </Badge>
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1 leading-snug">{c.case_title}</h4>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1 font-semibold">{c.court_name}</p>
-                        {c.assigned_lawyer && (
-                          <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1 font-bold">
-                            <span className="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded tracking-wide uppercase">
-                              Advocate:
-                            </span>
+              <Button
+                onClick={handleSendWhatsAppDigest}
+                className="w-full lg:w-fit h-8 px-3.5 text-xs font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center justify-center space-x-2 rounded-lg shadow-sm border-none transition-all duration-300"
+              >
+                <WhatsAppIcon />
+                <span>Send WhatsApp Digest</span>
+              </Button>
+            </div>
+
+            {/* Right Panel: List of Hearings (Scroll locked) */}
+            <div className="flex-1 space-y-2.5 max-h-[175px] overflow-y-auto pr-1">
+              {tomorrowsHearings.map(c => (
+                <div 
+                  key={c.id} 
+                  onClick={() => navigate(`/case/${c.id}`)}
+                  className="group p-3 bg-card/35 border-l-4 border-l-amber-500 border border-border/50 hover:bg-card/90 rounded-r-lg hover:shadow-sm cursor-pointer transition-all duration-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-left"
+                >
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                      <span className="font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.25 rounded">
+                        {c.case_number || 'NO DOCKET #'}
+                      </span>
+                      <span className="text-muted-foreground/30">•</span>
+                      <span className="text-muted-foreground font-bold truncate max-w-[180px]">{c.court_name}</span>
+                      {c.assigned_lawyer && (
+                        <>
+                          <span className="text-muted-foreground/30">•</span>
+                          <span className="text-slate-500 dark:text-slate-400 font-extrabold flex items-center space-x-1">
+                            <span className="text-[8px] bg-primary/15 text-primary border border-primary/20 px-1 rounded uppercase tracking-wider scale-90">Advocate</span>
                             <span>{c.assigned_lawyer.name}</span>
-                          </p>
-                        )}
-                      </div>
+                          </span>
+                        </>
+                      )}
                     </div>
+                    <h4 className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors truncate max-w-[500px]">
+                      {c.case_title}
+                    </h4>
+                  </div>
+                  
+                  {/* Action Panel */}
+                  <div className="flex items-center space-x-3.5 self-end sm:self-auto flex-shrink-0">
+                    <button
+                      onClick={(e) => handleSendWhatsAppAlert(e, c)}
+                      className="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 font-bold flex items-center space-x-1.5 focus:outline-none bg-emerald-500/5 px-2.5 py-1 rounded-lg border border-emerald-500/10 transition-all duration-200 text-xs"
+                      title="Send Case Alert to WhatsApp"
+                    >
+                      <WhatsAppIcon />
+                      <span>Send Alert</span>
+                    </button>
                     
-                    {/* Card Actions: WhatsApp dispatch and details link */}
-                    <div className="mt-3 flex items-center justify-between text-[10px] border-t border-border/30 pt-2">
-                      <button
-                        onClick={(e) => handleSendWhatsAppAlert(e, c)}
-                        className="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 font-bold flex items-center space-x-1 focus:outline-none bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10 transition-all duration-200 text-[9px]"
-                        title="Send Case Alert to WhatsApp"
-                      >
-                        <WhatsAppIcon />
-                        <span>Send Alert</span>
-                      </button>
-                      
-                      <div className="flex items-center space-x-0.5 font-bold text-primary transition-all duration-200 group-hover:translate-x-0.5">
-                        <span>Prepare Materials</span>
-                        <ChevronRight size={11} />
-                      </div>
+                    <div className="flex items-center space-x-0.5 font-bold text-primary transition-all duration-200 group-hover:translate-x-0.5 text-xs">
+                      <span>Open File</span>
+                      <ChevronRight size={13} />
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
         </Card>
