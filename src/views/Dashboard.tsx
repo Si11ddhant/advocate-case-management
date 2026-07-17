@@ -226,20 +226,19 @@ export const Dashboard: React.FC = () => {
                         {c.case_number || 'NO DOCKET #'}
                       </span>
                       <span className="text-muted-foreground/30">•</span>
-                      <span className="text-muted-foreground font-bold truncate max-w-[180px]">{c.court_name}</span>
-                      {c.assigned_lawyer && (
-                        <>
-                          <span className="text-muted-foreground/30">•</span>
-                          <span className="text-slate-500 dark:text-slate-400 font-extrabold flex items-center space-x-1">
-                            <span className="text-[8px] bg-primary/15 text-primary border border-primary/20 px-1 rounded uppercase tracking-wider scale-90">Advocate</span>
-                            <span>{c.assigned_lawyer.name}</span>
-                          </span>
-                        </>
-                      )}
+                      <span className="text-muted-foreground font-bold truncate max-w-[240px]">{c.court_name}</span>
                     </div>
                     <h4 className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors truncate max-w-[500px]">
                       {c.case_title}
                     </h4>
+                    {c.assigned_lawyer && (
+                      <p className="text-xs font-semibold text-primary dark:text-primary mt-1 flex items-center space-x-1.5">
+                        <span className="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1 rounded uppercase tracking-wider scale-95 font-black">
+                          Advocate
+                        </span>
+                        <span className="font-bold text-foreground/90">{c.assigned_lawyer.name}</span>
+                      </p>
+                    )}
                   </div>
                   
                   {/* Action Panel */}
