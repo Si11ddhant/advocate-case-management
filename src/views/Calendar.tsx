@@ -6,6 +6,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Badge } from '../components/ui/Badge';
 import { Calendar as CalendarIcon, ChevronRight, AlertTriangle } from 'lucide-react';
 
+interface CourtHoliday {
+  date: string;
+  name: string;
+  type: 'National' | 'Gazetted' | 'Vacation';
+}
+
+const COURT_HOLIDAYS: CourtHoliday[] = [
+  { date: '2026-01-26', name: 'Republic Day', type: 'National' },
+  { date: '2026-03-06', name: 'Holi Festival', type: 'Gazetted' },
+  { date: '2026-04-03', name: 'Good Friday', type: 'Gazetted' },
+  { date: '2026-04-14', name: 'Ambedkar Jayanti', type: 'Gazetted' },
+  { date: '2026-05-01', name: 'May Day / Labor Day', type: 'Gazetted' },
+  { date: '2026-07-21', name: 'Court Summer Vacation Recess', type: 'Vacation' },
+  { date: '2026-08-15', name: 'Independence Day', type: 'National' },
+  { date: '2026-09-04', name: 'Janmashtami Holiday', type: 'Gazetted' },
+  { date: '2026-10-02', name: 'Gandhi Jayanti', type: 'National' },
+  { date: '2026-11-09', name: 'Diwali Festival Holiday', type: 'Gazetted' },
+  { date: '2026-12-25', name: 'Christmas Day', type: 'National' }
+];
+
 export const Calendar: React.FC = () => {
   const navigate = useNavigate();
   const [cases, setCases] = useState<Case[]>([]);
@@ -60,15 +80,17 @@ export const Calendar: React.FC = () => {
   };
 
   // Group cases by next_hearing_date for date-wise timeline view
-  interface GroupedCases {
+  interface GroupedTimelineItem {
     date: string;
     label: string;
     isPast: boolean;
     casesList: Case[];
+    holiday?: CourtHoliday;
   }
 
-  const groupedHearingCases: GroupedCases[] = [];
+  const groupedHearingCases: GroupedTimelineItem[] = [];
 
+  // Group actual cases
   hearingCases.forEach(c => {
     const dateStr = c.next_hearing_date;
     const existingGroup = groupedHearingCases.find(g => g.date === dateStr);
@@ -85,6 +107,34 @@ export const Calendar: React.FC = () => {
       });
     }
   });
+
+  // Inject upcoming holidays (within next 60 days) to timeline
+  const todayVal = new Date();
+  todayVal.setHours(0,0,0,0);
+  const futureLimit = new Date();
+  futureLimit.setDate(todayVal.getDate() + 60);
+
+  COURT_HOLIDAYS.forEach(hol => {
+    const holDate = parseLocalDate(hol.date);
+    if (holDate >= todayVal && holDate <= futureLimit) {
+      const existingGroup = groupedHearingCases.find(g => g.date === hol.date);
+      if (existingGroup) {
+        existingGroup.holiday = hol;
+      } else {
+        const label = getRelativeDateLabel(hol.date);
+        groupedHearingCases.push({
+          date: hol.date,
+          label,
+          isPast: false,
+          casesList: [],
+          holiday: hol
+        });
+      }
+    }
+  });
+
+  // Sort unified timeline groups chronologically
+  groupedHearingCases.sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -132,6 +182,40 @@ export const Calendar: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Court Holidays card */}
+        <Card className="h-fit border border-border/80">
+          <CardHeader className="pb-3 text-left">
+            <CardTitle>Court Holidays</CardTitle>
+            <CardDescription>Official calendar recess and gazetted holidays.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2.5 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
+            {COURT_HOLIDAYS.map(hol => {
+              const [year, month, day] = hol.date.split('-').map(Number);
+              const formatted = new Date(year, month - 1, day).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short'
+              });
+              const isUpcoming = new Date(hol.date) >= new Date(new Date().toDateString());
+              return (
+                <div key={hol.date} className={`flex items-center justify-between p-2.5 border rounded-lg transition-colors text-left text-xs font-bold ${
+                  isUpcoming 
+                    ? 'border-border bg-card/60 hover:bg-muted/10' 
+                    : 'border-border/30 bg-muted/20 opacity-60'
+                }`}>
+                  <div className="space-y-0.5">
+                    <h5 className="text-foreground truncate max-w-[140px]">{hol.name}</h5>
+                    <span className="text-[9px] text-muted-foreground uppercase font-black">{hol.type} Holiday</span>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-[11px] font-extrabold ${isUpcoming ? 'text-primary' : 'text-muted-foreground'}`}>{formatted}</span>
+                    <p className="text-[9px] text-muted-foreground mt-0.5 font-mono">{year}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
         {/* Hearings Timeline column */}
         <Card className="md:col-span-2">
           <CardHeader>
@@ -159,14 +243,18 @@ export const Calendar: React.FC = () => {
                     <div key={group.date} className="relative space-y-3">
                       {/* Timeline Dot Indicator */}
                       <div className={`absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-background flex items-center justify-center ${
-                        group.isPast 
+                        group.holiday
+                          ? 'border-rose-500 text-rose-500'
+                          : group.isPast 
                           ? 'border-rose-500 text-rose-500' 
                           : group.label.includes('Today') 
                           ? 'border-emerald-500 text-emerald-500'
                           : 'border-primary text-primary'
                       }`}>
                         <span className={`h-1.5 w-1.5 rounded-full ${
-                          group.isPast 
+                          group.holiday
+                            ? 'bg-rose-500'
+                            : group.isPast 
                             ? 'bg-rose-500' 
                             : group.label.includes('Today') 
                             ? 'bg-emerald-500 animate-ping'
@@ -178,7 +266,9 @@ export const Calendar: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-xs font-black text-foreground font-mono uppercase tracking-wider">{formattedDate}</h3>
                         <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                          group.isPast 
+                          group.holiday
+                            ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                            : group.isPast 
                             ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' 
                             : group.label.includes('Today') 
                             ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' 
@@ -186,12 +276,23 @@ export const Calendar: React.FC = () => {
                             ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
                             : 'bg-primary/10 text-primary border border-primary/20'
                         }`}>
-                          {group.label}
+                          {group.holiday ? 'Holiday' : group.label}
                         </span>
                       </div>
 
                       {/* Group Cases List */}
                       <div className="space-y-3">
+                        {group.holiday && (
+                          <div className="flex items-center space-x-3 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-400 rounded-xl text-xs font-bold text-left shadow-sm">
+                            <span className="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold flex-shrink-0">
+                              Court Holiday
+                            </span>
+                            <span className="flex-1 truncate">
+                              🌴 {group.holiday.name} ({group.holiday.type})
+                            </span>
+                          </div>
+                        )}
+
                         {group.casesList.map(c => (
                           <div 
                             key={c.id} 
