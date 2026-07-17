@@ -200,9 +200,15 @@ export const Calendar: React.FC = () => {
                               group.isPast ? 'hover:border-rose-500/30' : ''
                             }`}
                           >
-                            <div className="space-y-1">
+                            <div className="space-y-1 text-left">
                               <h4 className="text-sm font-bold text-foreground line-clamp-1">{c.case_title}</h4>
                               <p className="text-xs text-muted-foreground line-clamp-1">{c.court_name}</p>
+                              {c.assigned_lawyer && (
+                                <p className="text-[10px] text-primary font-bold flex items-center space-x-1 mt-1">
+                                  <span className="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1 py-0.25 rounded uppercase tracking-wider">Advocate</span>
+                                  <span className="text-foreground/80">{c.assigned_lawyer.name}</span>
+                                </p>
+                              )}
                             </div>
 
                             <div className="mt-3 sm:mt-0 flex items-center justify-between sm:justify-end space-x-4">
