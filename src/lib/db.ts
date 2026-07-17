@@ -162,7 +162,7 @@ const MOCK_CASES: Case[] = [
     court_name: 'Supreme Court of India',
     case_number: 'WP (Civil) 112/1977',
     status: 'Delayed',
-    next_hearing_date: getRelativeDate(2), // Inside 48 hours alert!
+    next_hearing_date: getRelativeDate(2),
     description: 'Challenge to personal liberty and arbitrary administrative action regarding passport confiscation under Article 21.',
     assigned_lawyer_id: 'l2-uuid',
     created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
@@ -190,6 +190,150 @@ const MOCK_CASES: Case[] = [
     description: 'Petition challenging Section 377 of the Indian Penal Code. Closed following historical decriminalization of consensual relationships.',
     assigned_lawyer_id: 'l1-uuid',
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
+  },
+  {
+    id: 'case5-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Mohammad Salim v. State of Uttarakhand',
+    court_name: 'Bombay High Court',
+    case_number: 'PIL 12/2017',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'Writ petition concerning the legal status of the Rivers Ganga and Yamuna as living entities.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
+  },
+  {
+    id: 'case6-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'State of Maharashtra v. Salman Khan',
+    court_name: 'Bombay High Court',
+    case_number: 'CRA 451/2015',
+    status: 'Hold',
+    next_hearing_date: getRelativeDate(10),
+    description: 'Appellate proceedings review of the Sessions Court verdict in the 2002 hit-and-run accident litigation.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 14 * 86400000).toISOString(),
+  },
+  {
+    id: 'case7-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'National Legal Services Authority v. Union of India',
+    court_name: 'Delhi High Court',
+    case_number: 'WP (Civil) 400/2012',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'Litigation petition seeking rights and recognition for transgender individuals as a third gender under law.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
+  },
+  {
+    id: 'case8-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'State of Delhi v. Sushil Kumar',
+    court_name: 'Delhi High Court',
+    case_number: 'CRL.A 89/2021',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(4),
+    description: 'Criminal trial review involving stadium altercation incidents under Section 302 of IPC.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 6 * 86400000).toISOString(),
+  },
+  {
+    id: 'case9-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Indian Express v. Madras Union of Journalists',
+    court_name: 'Madras High Court',
+    case_number: 'Writ Appeal 121/2018',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(8),
+    description: 'Labor disputes regarding wage board structures and working standards for journalists.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
+  },
+  {
+    id: 'case10-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Ramesh Chandra v. State of U.P.',
+    court_name: 'Allahabad High Court',
+    case_number: 'Writ Tax 768/2022',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(6),
+    description: 'Dispute over tax assessment procedures and procedural violations under State GST Acts.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
+  },
+  {
+    id: 'case11-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Anil Kumar v. Delhi Development Authority',
+    court_name: 'City Civil Court Delhi',
+    case_number: 'CS (OS) 102/2023',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(3),
+    description: 'Property suit seeking declaration and permanent injunction against development authorities.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 9 * 86400000).toISOString(),
+  },
+  {
+    id: 'case12-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Sudhakar Soni v. Municipal Corporation of Greater Mumbai',
+    court_name: 'Civil Court Bombay',
+    case_number: 'LC Suit 4410/2021',
+    status: 'Delayed',
+    next_hearing_date: getRelativeDate(7),
+    description: 'Suit challenging demolition notice served under Section 351 of the MMC Act.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 11 * 86400000).toISOString(),
+  },
+  {
+    id: 'case13-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Kishore Patil v. State of Maharashtra',
+    court_name: 'District Court Pune',
+    case_number: 'Sessions Case 551/2020',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'District sessions trial in land acquisition fraud and criminal conspiracy allegations.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 18 * 86400000).toISOString(),
+  },
+  {
+    id: 'case14-uuid',
+    client_id: 'c2-uuid',
+    case_title: 'Ritu Saxena v. Vikram Saxena',
+    court_name: 'Saket District Court',
+    case_number: 'HMA 72/2022',
+    status: 'Hold',
+    next_hearing_date: getRelativeDate(12),
+    description: 'Matrimonial petition seeking maintenance and custody of minor child under Section 24 of Hindu Marriage Act.',
+    assigned_lawyer_id: 'l2-uuid',
+    created_at: new Date(Date.now() - 13 * 86400000).toISOString(),
+  },
+  {
+    id: 'case15-uuid',
+    client_id: 'c3-uuid',
+    case_title: 'Bangalore Traders v. Apex Logistics',
+    court_name: 'District and Sessions Court Bengaluru',
+    case_number: 'Com. OS 804/2023',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(9),
+    description: 'Commercial suit recovery of dues for breach of cargo supply chains contract terms.',
+    assigned_lawyer_id: 'l3-uuid',
+    created_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+  },
+  {
+    id: 'case16-uuid',
+    client_id: 'c1-uuid',
+    case_title: 'Aman Gupta v. State of Punjab',
+    court_name: 'District and Sessions Court Ludhiana',
+    case_number: 'Sessions Trial 110/2021',
+    status: 'Active',
+    next_hearing_date: getRelativeDate(1), // Tomorrow!
+    description: 'District trial on financial transaction forgery and counterfeit instruments.',
+    assigned_lawyer_id: 'l1-uuid',
+    created_at: new Date(Date.now() - 25 * 86400000).toISOString(),
   }
 ];
 
@@ -318,7 +462,7 @@ const MOCK_EXPENSES: Expense[] = [
 
 // Helper to seed localStorage mock data
 const initLocalStorage = () => {
-  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v5');
+  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v6');
   if (needsSeeding) {
     localStorage.setItem('adv_clients', JSON.stringify(MOCK_CLIENTS));
     localStorage.setItem('adv_cases', JSON.stringify(MOCK_CASES));
@@ -327,7 +471,7 @@ const initLocalStorage = () => {
     localStorage.setItem('adv_invoices', JSON.stringify(MOCK_INVOICES));
     localStorage.setItem('adv_expenses', JSON.stringify(MOCK_EXPENSES));
     localStorage.setItem('adv_lawyers', JSON.stringify(MOCK_LAWYERS));
-    localStorage.setItem('adv_seeded_indian_v5', 'true');
+    localStorage.setItem('adv_seeded_indian_v6', 'true');
   }
 };
 
