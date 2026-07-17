@@ -73,16 +73,24 @@ export const Billing: React.FC = () => {
     }
   };
 
+  // Filter invoices: Only show invoices for cases that have a generated Consolidated Final Bill
+  const filteredInvoices = invoices.filter(inv => {
+    return invoices.some(i => 
+      i.case_id === inv.case_id && 
+      (i.title.toLowerCase().includes('final consolidated') || i.invoice_number.startsWith('FINAL-'))
+    );
+  });
+
   // Metrics
-  const totalCollected = invoices
+  const totalCollected = filteredInvoices
     .filter(inv => inv.status === 'Paid')
     .reduce((sum, inv) => sum + Number(inv.amount), 0);
 
-  const totalOutstanding = invoices
+  const totalOutstanding = filteredInvoices
     .filter(inv => inv.status === 'Unpaid' || inv.status === 'Overdue')
     .reduce((sum, inv) => sum + Number(inv.amount), 0);
 
-  const totalInvoiced = invoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+  const totalInvoiced = filteredInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -159,7 +167,7 @@ export const Billing: React.FC = () => {
             <div className="flex h-40 items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-4 border-primary border-t-transparent"></div>
             </div>
-          ) : invoices.length === 0 ? (
+          ) : filteredInvoices.length === 0 ? (
             <div className="text-center py-16 border border-dashed border-border rounded-lg">
               <FileSpreadsheet className="mx-auto text-muted-foreground/60 h-10 w-10 mb-2" />
               <p className="text-sm font-semibold text-muted-foreground">No invoices found</p>
@@ -181,7 +189,7 @@ export const Billing: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map(inv => (
+                  {filteredInvoices.map(inv => (
                     <TableRow key={inv.id}>
                       <TableCell className="font-mono font-bold text-xs uppercase">{inv.invoice_number}</TableCell>
                       <TableCell className="font-semibold text-foreground">{inv.client?.name}</TableCell>
