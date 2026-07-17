@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../lib/db';
-import type { Case, CaseUpdate, Document, Invoice, Expense } from '../lib/db';
+import type { Case, CaseUpdate, Document, Invoice, Expense, Lawyer } from '../lib/db';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
@@ -39,6 +39,7 @@ export const CaseDetail: React.FC = () => {
   const [kase, setKase] = useState<Case | null>(null);
   const [updates, setUpdates] = useState<CaseUpdate[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Detail fields
@@ -107,21 +108,42 @@ export const CaseDetail: React.FC = () => {
       setHearingDate(caseData.next_hearing_date || '');
       setDescriptionInput(caseData.description || '');
 
-      const [updatesData, docsData, invoicesData, expensesData] = await Promise.all([
+      const [updatesData, docsData, invoicesData, expensesData, lawyersData] = await Promise.all([
         db.getUpdatesByCaseId(id),
         db.getDocumentsByCaseId(id),
         db.getInvoicesByCaseId(id),
-        db.getExpensesByCaseId(id)
+        db.getExpensesByCaseId(id),
+        db.getLawyers()
       ]);
       setUpdates(updatesData);
       setDocuments(docsData);
       setInvoices(invoicesData);
       setExpenses(expensesData);
+      setLawyers(lawyersData);
     } catch (err) {
       console.error('Error fetching details:', err);
       toast('Failed to load case specifics', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReassignLawyer = async (lawyerId: string) => {
+    if (!kase) return;
+    try {
+      await db.updateCaseAssignment(kase.id, lawyerId || null);
+      
+      const assignedName = lawyers.find(l => l.id === lawyerId)?.name || 'Unassigned';
+      await db.createUpdate({
+        case_id: kase.id,
+        update_text: `Reassigned case responsible advocate to: ${assignedName}`,
+        added_by: user?.email || 'system@firm.com'
+      });
+
+      toast('Responsible advocate updated successfully', 'success');
+      fetchCaseDetails();
+    } catch (err: any) {
+      toast(err.message || 'Failed to update assignment', 'error');
     }
   };
 
@@ -403,6 +425,23 @@ export const CaseDetail: React.FC = () => {
 
         {/* Docket Actions: Quick inline updates */}
         <div className="flex flex-wrap gap-4 items-center">
+          {/* Advocate Assignment Selector */}
+          <div className="space-y-1 text-left">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+              Responsible Advocate
+            </label>
+            <select
+              value={kase.assigned_lawyer_id || ''}
+              onChange={e => handleReassignLawyer(e.target.value)}
+              className="h-9 px-3 text-xs font-semibold rounded-lg border border-border bg-card hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all shadow-sm w-48 text-foreground font-semibold"
+            >
+              <option value="">Unassigned</option>
+              {lawyers.map(l => (
+                <option key={l.id} value={l.id}>{l.name} ({l.role})</option>
+              ))}
+            </select>
+          </div>
+
           {/* Status Changer */}
           <div className="space-y-1 text-left" ref={statusDropdownRef}>
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">

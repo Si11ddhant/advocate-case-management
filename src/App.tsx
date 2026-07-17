@@ -13,6 +13,7 @@ import { CaseDetail } from './views/CaseDetail';
 import { Calendar } from './views/Calendar';
 import { Settings } from './views/Settings';
 import { Billing } from './views/Billing';
+import { Lawyers } from './views/Lawyers';
 
 export const App: React.FC = () => {
   return (
@@ -41,6 +42,16 @@ export const App: React.FC = () => {
                   <ProtectedRoute>
                     <Layout>
                       <Clients />
+                    </Layout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/lawyers"
+                element={
+                  <ProtectedRoute>
+                    <Layout>
+                      <Lawyers />
                     </Layout>
                   </ProtectedRoute>
                 }

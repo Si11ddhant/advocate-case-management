@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { db } from '../lib/db';
-import type { Client } from '../lib/db';
+import type { Client, Lawyer } from '../lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -42,14 +42,21 @@ export const Clients: React.FC = () => {
   const [cNumber, setCNumber] = useState('');
   const [cHearingDate, setCHearingDate] = useState('');
   const [cDescription, setCDescription] = useState('');
+  const [lawyers, setLawyers] = useState<Lawyer[]>([]);
+  const [assignedLawyerId, setAssignedLawyerId] = useState('');
+  const [cAssignedLawyerId, setCAssignedLawyerId] = useState('');
   const [submittingCase, setSubmittingCase] = useState(false);
 
   const fetchClients = async () => {
     try {
-      const data = await db.getClients();
-      setClients(data);
+      const [clientsData, lawyersData] = await Promise.all([
+        db.getClients(),
+        db.getLawyers()
+      ]);
+      setClients(clientsData);
+      setLawyers(lawyersData);
     } catch (err) {
-      console.error('Error loading clients:', err);
+      console.error('Error loading clients/lawyers:', err);
       toast('Failed to load clients list', 'error');
     } finally {
       setLoading(false);
@@ -78,6 +85,7 @@ export const Clients: React.FC = () => {
     setEmail('');
     setAddress('');
     setClientType('Individual');
+    setAssignedLawyerId('');
     setAddCaseNow(false);
     setCaseTitle('');
     setCourtName('');
@@ -109,7 +117,8 @@ export const Clients: React.FC = () => {
           case_number: caseNumber,
           status: 'Active',
           next_hearing_date: nextHearingDate,
-          description: caseDescription
+          description: caseDescription,
+          assigned_lawyer_id: assignedLawyerId || undefined
         });
         toast(`Client "${name}" and Case "${caseTitle}" registered successfully!`, 'success');
       } else {
@@ -131,6 +140,7 @@ export const Clients: React.FC = () => {
     setCNumber('');
     setCHearingDate('');
     setCDescription('');
+    setCAssignedLawyerId('');
     setIsCaseModalOpen(true);
   };
 
@@ -150,7 +160,8 @@ export const Clients: React.FC = () => {
         case_number: cNumber,
         status: 'Active',
         next_hearing_date: cHearingDate,
-        description: cDescription
+        description: cDescription,
+        assigned_lawyer_id: cAssignedLawyerId || undefined
       });
       toast(`Case "${cTitle}" created for client "${selectedClientForCase.name}"!`, 'success');
       setIsCaseModalOpen(false);
@@ -419,6 +430,22 @@ export const Clients: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Assigned Advocate
+                </label>
+                <select
+                  value={assignedLawyerId}
+                  onChange={e => setAssignedLawyerId(e.target.value)}
+                  className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-medium text-foreground"
+                >
+                  <option value="">Select Assignee (Optional)</option>
+                  {lawyers.map(l => (
+                    <option key={l.id} value={l.id}>{l.name} ({l.role})</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -511,6 +538,22 @@ export const Clients: React.FC = () => {
               onChange={e => setCTitle(e.target.value)}
               className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Assigned Advocate
+            </label>
+            <select
+              value={cAssignedLawyerId}
+              onChange={e => setCAssignedLawyerId(e.target.value)}
+              className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-medium text-foreground"
+            >
+              <option value="">Select Assignee (Optional)</option>
+              {lawyers.map(l => (
+                <option key={l.id} value={l.id}>{l.name} ({l.role})</option>
+              ))}
+            </select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

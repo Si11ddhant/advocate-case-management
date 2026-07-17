@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { db } from '../lib/db';
-import type { Case, Client } from '../lib/db';
+import type { Case, Client, Lawyer } from '../lib/db';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -28,6 +28,7 @@ export const Cases: React.FC = () => {
   
   const [cases, setCases] = useState<Case[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [lawyers, setLawyers] = useState<Lawyer[]>([]);
   const [loading, setLoading] = useState(true);
 
   // View Mode: 'list' | 'board'
@@ -45,6 +46,7 @@ export const Cases: React.FC = () => {
   const [caseNumber, setCaseNumber] = useState('');
   const [description, setDescription] = useState('');
   const [nextHearingDate, setNextHearingDate] = useState('');
+  const [assignedLawyerId, setAssignedLawyerId] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Quick Action States
@@ -58,12 +60,14 @@ export const Cases: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      const [casesData, clientsData] = await Promise.all([
+      const [casesData, clientsData, lawyersData] = await Promise.all([
         db.getCases(),
-        db.getClients()
+        db.getClients(),
+        db.getLawyers()
       ]);
       setCases(casesData);
       setClients(clientsData);
+      setLawyers(lawyersData);
       if (clientsData.length > 0) {
         setClientId(clientsData[0].id);
       }
@@ -96,6 +100,7 @@ export const Cases: React.FC = () => {
     setCaseNumber('');
     setDescription('');
     setNextHearingDate('');
+    setAssignedLawyerId('');
     if (clients.length > 0) {
       setClientId(clients[0].id);
     } else {
@@ -124,7 +129,8 @@ export const Cases: React.FC = () => {
         case_number: caseNumber,
         status: 'Active',
         next_hearing_date: nextHearingDate,
-        description: description
+        description: description,
+        assigned_lawyer_id: assignedLawyerId || undefined
       });
       toast(`Case "${caseTitle}" added to docket!`, 'success');
       setIsNewCaseOpen(false);
@@ -328,6 +334,7 @@ export const Cases: React.FC = () => {
                     <TableHead>Client Entity</TableHead>
                     <TableHead>Court Info</TableHead>
                     <TableHead>Docket Status</TableHead>
+                    <TableHead>Assigned Advocate</TableHead>
                     <TableHead>Next Hearing</TableHead>
                     <TableHead className="w-16 text-right"></TableHead>
                   </TableRow>
@@ -371,6 +378,18 @@ export const Cases: React.FC = () => {
                           >
                             {c.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-foreground font-semibold text-xs">
+                          {c.assigned_lawyer ? (
+                            <div className="flex items-center space-x-1.5">
+                              <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-black uppercase border border-primary/20 flex-shrink-0">
+                                {c.assigned_lawyer.name.split(' ').filter(Boolean).map(n => n[0]).join('')}
+                              </div>
+                              <span className="truncate max-w-[130px]">{c.assigned_lawyer.name}</span>
+                            </div>
+                          ) : (
+                            <span className="italic text-muted-foreground/45 text-xs">Unassigned</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           {c.next_hearing_date ? (
@@ -508,6 +527,16 @@ export const Cases: React.FC = () => {
                                 <p className="text-[9px] text-muted-foreground/75 truncate">
                                   Court: {c.court_name || 'Not provided'}
                                 </p>
+                                {c.assigned_lawyer && (
+                                  <div className="flex items-center space-x-1.5 mt-1.5 border-t border-border/30 pt-1.5 pb-0.5">
+                                    <div className="w-4.5 h-4.5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[8px] font-black uppercase flex-shrink-0 border border-primary/20">
+                                      {c.assigned_lawyer.name.split(' ').filter(Boolean).map(n => n[0]).join('')}
+                                    </div>
+                                    <span className="text-[9px] font-bold text-slate-500 truncate" title={`Advocate: ${c.assigned_lawyer.name}`}>
+                                      {c.assigned_lawyer.name}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
 
                               {c.next_hearing_date && (
@@ -605,6 +634,22 @@ export const Cases: React.FC = () => {
               >
                 {clients.map(cl => (
                   <option key={cl.id} value={cl.id}>{cl.name} {cl.client_type ? `(${cl.client_type})` : ''}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Assigned Advocate
+              </label>
+              <select
+                value={assignedLawyerId}
+                onChange={e => setAssignedLawyerId(e.target.value)}
+                className="w-full h-10 px-3 text-sm rounded-lg border border-input bg-background/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all font-medium text-foreground"
+              >
+                <option value="">Select Assignee (Optional)</option>
+                {lawyers.map(l => (
+                  <option key={l.id} value={l.id}>{l.name} ({l.role})</option>
                 ))}
               </select>
             </div>

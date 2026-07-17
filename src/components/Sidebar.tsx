@@ -13,7 +13,8 @@ import {
   Moon,
   ChevronLeft,
   ChevronRight,
-  DollarSign
+  DollarSign,
+  Shield
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onClose }) => {
   const menuItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
     { name: 'Clients', path: '/clients', icon: Users },
+    { name: 'Lawyers', path: '/lawyers', icon: Shield },
     { name: 'Cases', path: '/cases', icon: Briefcase },
     { name: 'Calendar', path: '/calendar', icon: Calendar },
     { name: 'Billing', path: '/billing', icon: DollarSign },

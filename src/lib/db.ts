@@ -10,6 +10,15 @@ export interface Client {
   created_at: string;
 }
 
+export interface Lawyer {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
 export interface Case {
   id: string;
   client_id: string;
@@ -19,8 +28,10 @@ export interface Case {
   status: 'Active' | 'Completed' | 'Delayed' | 'Cancelled' | 'Hold';
   next_hearing_date: string;
   description: string;
+  assigned_lawyer_id?: string;
   created_at: string;
   client?: Client; // Joined client object
+  assigned_lawyer?: Lawyer; // Joined lawyer object
 }
 
 export interface CaseUpdate {
@@ -104,6 +115,33 @@ const MOCK_CLIENTS: Client[] = [
   }
 ];
 
+const MOCK_LAWYERS: Lawyer[] = [
+  {
+    id: 'l1-uuid',
+    name: 'Advocate Abhishek Singh',
+    email: 'abhishek.singh@firm.com',
+    phone: '+91 98110 12345',
+    role: 'Senior Partner',
+    created_at: new Date(Date.now() - 60 * 86400000).toISOString()
+  },
+  {
+    id: 'l2-uuid',
+    name: 'Advocate Priya Sharma',
+    email: 'priya.sharma@firm.com',
+    phone: '+91 98120 54321',
+    role: 'Associate Advocate',
+    created_at: new Date(Date.now() - 45 * 86400000).toISOString()
+  },
+  {
+    id: 'l3-uuid',
+    name: 'Advocate Rahul Verma',
+    email: 'rahul.verma@firm.com',
+    phone: '+91 98130 98765',
+    role: 'Junior Associate',
+    created_at: new Date(Date.now() - 30 * 86400000).toISOString()
+  }
+];
+
 const MOCK_CASES: Case[] = [
   {
     id: 'case1-uuid',
@@ -114,6 +152,7 @@ const MOCK_CASES: Case[] = [
     status: 'Active',
     next_hearing_date: getRelativeDate(1), // Tomorrow!
     description: 'Landmark constitutional case regarding the power of Parliament to amend the Constitution. Reviewing the Basic Structure Doctrine.',
+    assigned_lawyer_id: 'l1-uuid',
     created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
   },
   {
@@ -125,6 +164,7 @@ const MOCK_CASES: Case[] = [
     status: 'Delayed',
     next_hearing_date: getRelativeDate(2), // Inside 48 hours alert!
     description: 'Challenge to personal liberty and arbitrary administrative action regarding passport confiscation under Article 21.',
+    assigned_lawyer_id: 'l2-uuid',
     created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
   },
   {
@@ -136,6 +176,7 @@ const MOCK_CASES: Case[] = [
     status: 'Completed',
     next_hearing_date: getRelativeDate(-5),
     description: 'Constitutional challenge regarding validity of Talaq-e-Biddat (Triple Talaq). Disposed following final judgment declaring it unconstitutional.',
+    assigned_lawyer_id: 'l3-uuid',
     created_at: new Date(Date.now() - 90 * 86400000).toISOString(),
   },
   {
@@ -147,6 +188,7 @@ const MOCK_CASES: Case[] = [
     status: 'Cancelled',
     next_hearing_date: '',
     description: 'Petition challenging Section 377 of the Indian Penal Code. Closed following historical decriminalization of consensual relationships.',
+    assigned_lawyer_id: 'l1-uuid',
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
   }
 ];
@@ -276,7 +318,7 @@ const MOCK_EXPENSES: Expense[] = [
 
 // Helper to seed localStorage mock data
 const initLocalStorage = () => {
-  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v4');
+  const needsSeeding = !localStorage.getItem('adv_seeded_indian_v5');
   if (needsSeeding) {
     localStorage.setItem('adv_clients', JSON.stringify(MOCK_CLIENTS));
     localStorage.setItem('adv_cases', JSON.stringify(MOCK_CASES));
@@ -284,7 +326,8 @@ const initLocalStorage = () => {
     localStorage.setItem('adv_documents', JSON.stringify(MOCK_DOCUMENTS));
     localStorage.setItem('adv_invoices', JSON.stringify(MOCK_INVOICES));
     localStorage.setItem('adv_expenses', JSON.stringify(MOCK_EXPENSES));
-    localStorage.setItem('adv_seeded_indian_v4', 'true');
+    localStorage.setItem('adv_lawyers', JSON.stringify(MOCK_LAWYERS));
+    localStorage.setItem('adv_seeded_indian_v5', 'true');
   }
 };
 
@@ -356,6 +399,84 @@ export const db = {
     }
   },
 
+  // Lawyers Actions
+  async getLawyers(): Promise<Lawyer[]> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase.from('lawyers').select('*').order('name');
+      if (error) throw error;
+      return data || [];
+    } else {
+      initLocalStorage();
+      return JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+    }
+  },
+
+  async createLawyer(lawyer: Omit<Lawyer, 'id' | 'created_at'>): Promise<Lawyer> {
+    if (isSupabaseConfigured && supabase) {
+      const { data, error } = await supabase
+        .from('lawyers')
+        .insert([{ ...lawyer }])
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const lawyers = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const newLawyer: Lawyer = {
+        ...lawyer,
+        id: 'lawyer-' + Math.random().toString(36).substr(2, 9),
+        created_at: new Date().toISOString(),
+      };
+      lawyers.push(newLawyer);
+      localStorage.setItem('adv_lawyers', JSON.stringify(lawyers));
+      return newLawyer;
+    }
+  },
+
+  async deleteLawyer(id: string): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('lawyers')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    } else {
+      const lawyers = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
+      const filteredLawyers = lawyers.filter((l: Lawyer) => l.id !== id);
+      localStorage.setItem('adv_lawyers', JSON.stringify(filteredLawyers));
+
+      // Reset assignment in cases
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updatedCases = cases.map((c: Case) => {
+        if (c.assigned_lawyer_id === id) {
+          const { assigned_lawyer_id, ...rest } = c;
+          return rest;
+        }
+        return c;
+      });
+      localStorage.setItem('adv_cases', JSON.stringify(updatedCases));
+    }
+  },
+
+  async updateCaseAssignment(caseId: string, lawyerId: string | null): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from('cases')
+        .update({ assigned_lawyer_id: lawyerId })
+        .eq('id', caseId);
+      if (error) throw error;
+    } else {
+      const cases = JSON.parse(localStorage.getItem('adv_cases') || '[]');
+      const updatedCases = cases.map((c: Case) => {
+        if (c.id === caseId) {
+          return { ...c, assigned_lawyer_id: lawyerId || undefined };
+        }
+        return c;
+      });
+      localStorage.setItem('adv_cases', JSON.stringify(updatedCases));
+    }
+  },
+
   // Cases Actions
   async getCases(): Promise<Case[]> {
     if (isSupabaseConfigured && supabase) {
@@ -366,15 +487,17 @@ export const db = {
       if (error) throw error;
       return (data || []).map(item => ({
         ...item,
-        client: item.clients // Rename joined clients object
+        client: item.clients
       }));
     } else {
       initLocalStorage();
       const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
       const clients: Client[] = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const lawyers: Lawyer[] = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
       return cases.map(c => ({
         ...c,
-        client: clients.find(cl => cl.id === c.client_id)
+        client: clients.find(cl => cl.id === c.client_id),
+        assigned_lawyer: lawyers.find(l => l.id === c.assigned_lawyer_id)
       }));
     }
   },
@@ -395,11 +518,13 @@ export const db = {
       initLocalStorage();
       const cases: Case[] = JSON.parse(localStorage.getItem('adv_cases') || '[]');
       const clients: Client[] = JSON.parse(localStorage.getItem('adv_clients') || '[]');
+      const lawyers: Lawyer[] = JSON.parse(localStorage.getItem('adv_lawyers') || '[]');
       const c = cases.find(item => item.id === id);
       if (!c) return null;
       return {
         ...c,
-        client: clients.find(cl => cl.id === c.client_id)
+        client: clients.find(cl => cl.id === c.client_id),
+        assigned_lawyer: lawyers.find(l => l.id === c.assigned_lawyer_id)
       };
     }
   },
