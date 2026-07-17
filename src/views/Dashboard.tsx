@@ -228,6 +228,14 @@ export const Dashboard: React.FC = () => {
                       <div>
                         <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">{c.case_title}</h4>
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-1 font-semibold">{c.court_name}</p>
+                        {c.assigned_lawyer && (
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center space-x-1.5 font-bold">
+                            <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                              Advocate:
+                            </span>
+                            <span>{c.assigned_lawyer.name}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                     
