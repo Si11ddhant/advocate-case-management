@@ -208,7 +208,7 @@ export const CaseDetail: React.FC = () => {
       
       await db.createUpdate({
         case_id: id,
-        update_text: `System: New invoice created - "${invTitle}" for $${totalInvoiceAmount.toFixed(2)} (includes $${expensesTotal.toFixed(2)} disbursements).`,
+        update_text: `System: New invoice created - "${invTitle}" for ₹${totalInvoiceAmount.toFixed(2)} (includes ₹${expensesTotal.toFixed(2)} disbursements).`,
         added_by: user?.email || 'System'
       });
       fetchCaseDetails();
@@ -216,6 +216,62 @@ export const CaseDetail: React.FC = () => {
       toast(err.message || 'Failed to create invoice', 'error');
     } finally {
       setSubmittingInvoice(false);
+    }
+  };
+
+  const handleGenerateFinalBill = async () => {
+    if (!kase) return;
+    const unpaidAmt = invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0);
+    const unbilledAmt = expenses.filter(e => e.status === 'Unbilled').reduce((s, e) => s + e.amount, 0);
+    const totalAmt = unpaidAmt + unbilledAmt;
+
+    if (totalAmt <= 0) {
+      toast('No outstanding amounts to bill', 'warning');
+      return;
+    }
+
+    if (!window.confirm(`This will consolidate all unpaid fees (₹${unpaidAmt.toFixed(2)}) and unbilled expenses (₹${unbilledAmt.toFixed(2)}) into a single Final Bill of ₹${totalAmt.toFixed(2)}. Existing unpaid invoices will be marked as merged. Proceed?`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create the final invoice
+      const finalInv = await db.createInvoice({
+        case_id: kase.id,
+        client_id: kase.client_id,
+        title: 'Final Consolidated Case Bill',
+        amount: totalAmt,
+        status: 'Unpaid',
+        due_date: new Date().toISOString().split('T')[0]
+      });
+
+      // Mark all unbilled expenses as Billed and link to final invoice
+      const unbilledExpenses = expenses.filter(e => e.status === 'Unbilled');
+      if (unbilledExpenses.length > 0) {
+        await db.markExpensesAsBilled(unbilledExpenses.map(e => e.id), finalInv.id);
+      }
+
+      // Mark old unpaid invoices as Paid/Merged
+      const unpaidInvoices = invoices.filter(i => i.status !== 'Paid');
+      if (unpaidInvoices.length > 0) {
+        await Promise.all(
+          unpaidInvoices.map(inv => db.updateInvoiceStatus(inv.id, 'Paid')) // Mark as settled/merged
+        );
+      }
+
+      // Add a case timeline update
+      await db.createUpdate({
+        case_id: kase.id,
+        update_text: `Generated Consolidated Final Bill (${finalInv.invoice_number}) for outstanding amount: ₹${totalAmt.toFixed(2)}`,
+        added_by: user?.email || 'billing@firm.com'
+      });
+
+      toast('Final Consolidated Bill generated successfully!', 'success');
+      fetchCaseDetails();
+    } catch (err: any) {
+      toast(err.message || 'Failed to generate final bill', 'error');
+      setLoading(false);
     }
   };
 
@@ -1003,7 +1059,7 @@ export const CaseDetail: React.FC = () => {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Amount ($) <span className="text-rose-500">*</span>
+                      Amount (₹) <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -1102,6 +1158,38 @@ export const CaseDetail: React.FC = () => {
                 <CardDescription>Track payments and pending invoice sheets for this matter.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Consolidated Final Bill Summary widget */}
+                {(invoices.some(i => i.status !== 'Paid') || expenses.some(e => e.status === 'Unbilled')) && (
+                  <div className="p-4 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/20 rounded-xl mb-4 text-left flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">Consolidated Account Ledger</h4>
+                      <p className="text-sm font-black text-foreground">Outstanding Case Balance</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mt-1 font-bold">
+                        <span>Unpaid Fees: <strong className="text-foreground">₹{invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0).toFixed(2)}</strong></span>
+                        <span>•</span>
+                        <span>Unbilled Expenses: <strong className="text-foreground">₹{expenses.filter(e => e.status === 'Unbilled').reduce((s, e) => s + e.amount, 0).toFixed(2)}</strong></span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3.5 self-end sm:self-auto flex-shrink-0">
+                      <div className="text-right">
+                        <div className="text-base font-black text-indigo-600 dark:text-indigo-400">
+                          ₹{(invoices.filter(i => i.status !== 'Paid').reduce((s, i) => s + i.amount, 0) + expenses.filter(e => e.status === 'Unbilled').reduce((s, e) => s + e.amount, 0)).toFixed(2)}
+                        </div>
+                        <p className="text-[9px] uppercase font-black tracking-wider text-muted-foreground mt-0.5">Total Due</p>
+                      </div>
+                      
+                      <Button
+                        size="sm"
+                        onClick={handleGenerateFinalBill}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs shadow-md shadow-indigo-600/15 h-8.5 rounded-lg border-none"
+                      >
+                        Generate Final Bill
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 {invoices.length === 0 ? (
                   <p className="text-sm text-muted-foreground py-6 text-center">No fees or invoices registered for this case.</p>
                 ) : (
