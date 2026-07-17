@@ -147,74 +147,76 @@ export const Calendar: React.FC = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Calendar visual overview column */}
-        <Card className="md:col-span-1 h-fit">
-          <CardHeader>
-            <CardTitle>Schedule Summary</CardTitle>
-            <CardDescription>Metrics for docket deadlines</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm font-semibold">
-            <div className="p-4 bg-muted/50 border border-border rounded-lg flex items-center justify-between">
-              <div>
-                <span className="text-2xl font-black text-foreground">
-                  {hearingCases.filter(c => {
-                    const diff = new Date(c.next_hearing_date).getTime() - new Date().setHours(0,0,0,0);
-                    return diff >= 0;
-                  }).length}
-                </span>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Upcoming Hearings</p>
-              </div>
-              <CalendarIcon size={24} className="text-primary" />
-            </div>
-
-            <div className="p-4 bg-muted/50 border border-border rounded-lg flex items-center justify-between">
-              <div>
-                <span className="text-2xl font-black text-rose-500">
-                  {hearingCases.filter(c => {
-                    const diff = new Date(c.next_hearing_date).getTime() - new Date().setHours(0,0,0,0);
-                    return diff < 0;
-                  }).length}
-                </span>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Past Due Appearances</p>
-              </div>
-              <AlertTriangle size={24} className="text-rose-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Court Holidays card */}
-        <Card className="h-fit border border-border/80">
-          <CardHeader className="pb-3 text-left">
-            <CardTitle>Court Holidays</CardTitle>
-            <CardDescription>Official calendar recess and gazetted holidays.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2.5 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
-            {COURT_HOLIDAYS.map(hol => {
-              const [year, month, day] = hol.date.split('-').map(Number);
-              const formatted = new Date(year, month - 1, day).toLocaleDateString('en-IN', {
-                day: 'numeric',
-                month: 'short'
-              });
-              const isUpcoming = new Date(hol.date) >= new Date(new Date().toDateString());
-              return (
-                <div key={hol.date} className={`flex items-center justify-between p-2.5 border rounded-lg transition-colors text-left text-xs font-bold ${
-                  isUpcoming 
-                    ? 'border-border bg-card/60 hover:bg-muted/10' 
-                    : 'border-border/30 bg-muted/20 opacity-60'
-                }`}>
-                  <div className="space-y-0.5">
-                    <h5 className="text-foreground truncate max-w-[140px]">{hol.name}</h5>
-                    <span className="text-[9px] text-muted-foreground uppercase font-black">{hol.type} Holiday</span>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-[11px] font-extrabold ${isUpcoming ? 'text-primary' : 'text-muted-foreground'}`}>{formatted}</span>
-                    <p className="text-[9px] text-muted-foreground mt-0.5 font-mono">{year}</p>
-                  </div>
+        {/* Left Column: Schedule Summary & Court Holidays */}
+        <div className="md:col-span-1 space-y-6">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>Schedule Summary</CardTitle>
+              <CardDescription>Metrics for docket deadlines</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm font-semibold">
+              <div className="p-4 bg-muted/50 border border-border rounded-lg flex items-center justify-between">
+                <div>
+                  <span className="text-2xl font-black text-foreground">
+                    {hearingCases.filter(c => {
+                      const diff = new Date(c.next_hearing_date).getTime() - new Date().setHours(0,0,0,0);
+                      return diff >= 0;
+                    }).length}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Upcoming Hearings</p>
                 </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                <CalendarIcon size={24} className="text-primary" />
+              </div>
+
+              <div className="p-4 bg-muted/50 border border-border rounded-lg flex items-center justify-between">
+                <div>
+                  <span className="text-2xl font-black text-rose-500">
+                    {hearingCases.filter(c => {
+                      const diff = new Date(c.next_hearing_date).getTime() - new Date().setHours(0,0,0,0);
+                      return diff < 0;
+                    }).length}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">Past Due Appearances</p>
+                </div>
+                <AlertTriangle size={24} className="text-rose-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Court Holidays card */}
+          <Card className="h-fit border border-border/80">
+            <CardHeader className="pb-3 text-left">
+              <CardTitle>Court Holidays</CardTitle>
+              <CardDescription>Official calendar recess and gazetted holidays.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2.5 max-h-[300px] overflow-y-auto scrollbar-hide pr-1">
+              {COURT_HOLIDAYS.map(hol => {
+                const [year, month, day] = hol.date.split('-').map(Number);
+                const formatted = new Date(year, month - 1, day).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short'
+                });
+                const isUpcoming = new Date(hol.date) >= new Date(new Date().toDateString());
+                return (
+                  <div key={hol.date} className={`flex items-center justify-between p-2.5 border rounded-lg transition-colors text-left text-xs font-bold ${
+                    isUpcoming 
+                      ? 'border-border bg-card/60 hover:bg-muted/10' 
+                      : 'border-border/30 bg-muted/20 opacity-60'
+                  }`}>
+                    <div className="space-y-0.5">
+                      <h5 className="text-foreground truncate max-w-[140px]">{hol.name}</h5>
+                      <span className="text-[9px] text-muted-foreground uppercase font-black">{hol.type} Holiday</span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-[11px] font-extrabold ${isUpcoming ? 'text-primary' : 'text-muted-foreground'}`}>{formatted}</span>
+                      <p className="text-[9px] text-muted-foreground mt-0.5 font-mono">{year}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Hearings Timeline column */}
         <Card className="md:col-span-2">
