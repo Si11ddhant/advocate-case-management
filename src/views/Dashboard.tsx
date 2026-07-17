@@ -175,62 +175,64 @@ export const Dashboard: React.FC = () => {
 
       {/* Tomorrow's Hearings Alert Section */}
       {tomorrowsHearings.length > 0 && (
-        <Card className="border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent relative overflow-hidden backdrop-blur-md rounded-2xl shadow-xl shadow-amber-500/5">
+        <Card className="border border-amber-500/20 bg-gradient-to-br from-amber-500/8 via-amber-500/3 to-transparent relative overflow-hidden backdrop-blur-md rounded-xl shadow-md">
           {/* Neon Glow Element */}
-          <div className="absolute right-0 top-0 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute right-0 top-0 w-48 h-48 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
           
-          <div className="p-6 flex items-start space-x-5 relative z-10">
-            <div className="bg-gradient-to-tr from-amber-500 to-orange-500 text-white p-3 rounded-2xl shadow-lg shadow-amber-500/20 flex-shrink-0 animate-pulse">
-              <AlertTriangle size={24} />
+          <div className="p-4 flex items-start space-x-3.5 relative z-10">
+            <div className="bg-gradient-to-tr from-amber-500 to-orange-500 text-white p-2 rounded-xl shadow-md shadow-amber-500/10 flex-shrink-0 animate-pulse mt-0.5">
+              <AlertTriangle size={18} />
             </div>
             
             <div className="flex-1 min-w-0">
               {/* Alert Header layout */}
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-border/40 pb-4 gap-4 text-left">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-border/20 pb-2.5 gap-2 text-left">
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <h3 className="text-lg font-black text-foreground tracking-tight">
+                  <div className="flex items-center space-x-1.5">
+                    <h3 className="text-sm font-black text-foreground tracking-tight">
                       Hearings Scheduled for Tomorrow
                     </h3>
-                    <span className="relative flex h-2 w-2">
+                    <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
                     You have <span className="font-bold text-amber-600 dark:text-amber-400">{tomorrowsHearings.length} court hearing{tomorrowsHearings.length > 1 ? 's' : ''}</span> listed for <span className="font-mono font-bold text-foreground">{tomorrowStr}</span>.
                   </p>
                 </div>
                 
                 <Button
                   onClick={handleSendWhatsAppDigest}
-                  className="h-9 px-4 text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center space-x-2 rounded-xl shadow-md shadow-emerald-500/10 border-none transition-all duration-300 self-start md:self-auto flex-shrink-0"
+                  className="h-7.5 px-3 text-[10px] font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white flex items-center space-x-1.5 rounded-lg shadow-sm border-none transition-all duration-300 self-start md:self-auto flex-shrink-0"
                 >
                   <WhatsAppIcon />
                   <span>Send Digest via WhatsApp</span>
                 </Button>
               </div>
               
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {tomorrowsHearings.map(c => (
                   <div 
                     key={c.id} 
                     onClick={() => navigate(`/case/${c.id}`)}
-                    className="group p-4 bg-card/40 backdrop-blur-sm border border-border/80 hover:border-amber-500/40 hover:bg-card/90 rounded-xl hover:shadow-lg hover:shadow-amber-500/20 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 flex flex-col justify-between text-left"
+                    className="group p-3 bg-card/30 backdrop-blur-xs border border-border/60 hover:border-amber-500/30 hover:bg-card/85 rounded-lg hover:shadow-md cursor-pointer transition-all duration-300 flex flex-col justify-between text-left"
                   >
-                    <div className="space-y-2.5">
+                    <div className="space-y-1.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md truncate max-w-[140px]">
+                        <span className="text-[8px] font-mono font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded truncate max-w-[120px]">
                           {c.case_number || 'NO DOCKET #'}
                         </span>
-                        <Badge variant="warning">{c.status}</Badge>
+                        <Badge variant="warning" className="text-[8px] px-1.5 py-0">
+                          {c.status}
+                        </Badge>
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-snug">{c.case_title}</h4>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1 font-semibold">{c.court_name}</p>
+                        <h4 className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1 leading-snug">{c.case_title}</h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1 font-semibold">{c.court_name}</p>
                         {c.assigned_lawyer && (
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-2 flex items-center space-x-1.5 font-bold">
-                            <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                          <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-1 font-bold">
+                            <span className="text-[8px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded tracking-wide uppercase">
                               Advocate:
                             </span>
                             <span>{c.assigned_lawyer.name}</span>
@@ -240,19 +242,19 @@ export const Dashboard: React.FC = () => {
                     </div>
                     
                     {/* Card Actions: WhatsApp dispatch and details link */}
-                    <div className="mt-5 flex items-center justify-between text-[11px] border-t border-border/40 pt-3">
+                    <div className="mt-3 flex items-center justify-between text-[10px] border-t border-border/30 pt-2">
                       <button
                         onClick={(e) => handleSendWhatsAppAlert(e, c)}
-                        className="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 font-bold flex items-center space-x-1.5 focus:outline-none bg-emerald-500/5 px-2.5 py-1 rounded-lg border border-emerald-500/10 transition-all duration-200"
+                        className="text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/15 font-bold flex items-center space-x-1 focus:outline-none bg-emerald-500/5 px-2 py-0.5 rounded border border-emerald-500/10 transition-all duration-200 text-[9px]"
                         title="Send Case Alert to WhatsApp"
                       >
                         <WhatsAppIcon />
                         <span>Send Alert</span>
                       </button>
                       
-                      <div className="flex items-center space-x-0.5 font-bold text-primary transition-all duration-200 group-hover:translate-x-1">
+                      <div className="flex items-center space-x-0.5 font-bold text-primary transition-all duration-200 group-hover:translate-x-0.5">
                         <span>Prepare Materials</span>
-                        <ChevronRight size={13} />
+                        <ChevronRight size={11} />
                       </div>
                     </div>
                   </div>
