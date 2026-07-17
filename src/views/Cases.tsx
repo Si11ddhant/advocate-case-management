@@ -325,18 +325,18 @@ export const Cases: React.FC = () => {
             </div>
           ) : viewMode === 'list' ? (
             /* LIST VIEW MODE */
-            <div className="overflow-visible bg-card border border-border rounded-xl p-4">
+            <div className="overflow-visible w-full">
               <div className="w-full overflow-x-auto">
-                <Table className="overflow-visible">
+                <Table className="overflow-visible border border-border/80">
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Case Title</TableHead>
-                    <TableHead>Client Entity</TableHead>
-                    <TableHead>Court Info</TableHead>
-                    <TableHead>Docket Status</TableHead>
-                    <TableHead>Assigned Advocate</TableHead>
-                    <TableHead>Next Hearing</TableHead>
-                    <TableHead className="w-16 text-right"></TableHead>
+                  <TableRow className="bg-muted/40 hover:bg-muted/40">
+                    <TableHead className="py-4 px-5 text-xs font-black uppercase tracking-wider text-muted-foreground w-[28%] min-w-[240px]">Case Title</TableHead>
+                    <TableHead className="py-4 px-5 text-xs font-black uppercase tracking-wider text-muted-foreground w-[15%] min-w-[130px]">Client Entity</TableHead>
+                    <TableHead className="py-4 px-5 text-xs font-black uppercase tracking-wider text-muted-foreground w-[20%] min-w-[170px]">Court Info</TableHead>
+                    <TableHead className="py-4 px-5 text-xs font-black uppercase tracking-wider text-muted-foreground w-[12%] min-w-[100px]">Docket Status</TableHead>
+                    <TableHead className="py-4 px-5 text-xs font-black uppercase tracking-wider text-muted-foreground w-[18%] min-w-[190px]">Assigned Advocate</TableHead>
+                    <TableHead className="py-4 px-5 text-xs font-black uppercase tracking-wider text-muted-foreground w-[15%] min-w-[130px]">Next Hearing</TableHead>
+                    <TableHead className="w-12 text-right py-4 px-5"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="overflow-visible">
@@ -345,25 +345,26 @@ export const Cases: React.FC = () => {
                     return (
                       <TableRow 
                         key={c.id} 
-                        className="relative overflow-visible group cursor-pointer hover:bg-muted/10 transition-colors"
+                        className="relative overflow-visible group cursor-pointer hover:bg-muted/20 transition-colors border-b border-border/60"
                         onClick={() => navigate(`/case/${c.id}`)}
                       >
-                        <TableCell className="font-bold text-foreground">
-                          <span className="text-primary/95 hover:underline transition-colors">
+                        <TableCell className="py-5 px-5 font-bold text-foreground">
+                          <span className="text-primary hover:underline transition-colors text-sm">
                             {c.case_title}
                           </span>
-                          <span className="block text-[10px] font-mono text-muted-foreground tracking-wider uppercase mt-1">
+                          <span className="block text-[10px] font-mono text-muted-foreground/80 font-bold tracking-wider uppercase mt-1">
                             {c.case_number || 'NO ASSIGNED NUMBER'}
                           </span>
                         </TableCell>
-                        <TableCell className="text-muted-foreground text-sm font-semibold">
+                        <TableCell className="py-5 px-5 text-slate-800 dark:text-slate-200 text-sm font-bold">
                           {c.client?.name || 'No Client Linked'}
                         </TableCell>
-                        <TableCell className="text-muted-foreground text-xs leading-normal">
+                        <TableCell className="py-5 px-5 text-slate-600 dark:text-slate-400 text-xs font-semibold leading-relaxed">
                           {c.court_name || 'N/A'}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-5 px-5">
                           <Badge
+                            className="font-bold text-[10px] uppercase px-2 py-0.5 tracking-wider"
                             variant={
                               c.status === 'Active'
                                 ? 'success'
@@ -379,36 +380,42 @@ export const Cases: React.FC = () => {
                             {c.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-foreground font-semibold text-xs">
+                        <TableCell className="py-5 px-5 text-foreground font-semibold text-xs">
                           {c.assigned_lawyer ? (
-                            <div className="flex items-center space-x-1.5">
-                              <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-black uppercase border border-primary/20 flex-shrink-0">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-6.5 h-6.5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-black uppercase border border-primary/20 flex-shrink-0">
                                 {c.assigned_lawyer.name.split(' ').filter(Boolean).map(n => n[0]).join('')}
                               </div>
-                              <span className="truncate max-w-[130px]">{c.assigned_lawyer.name}</span>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-xs font-extrabold text-foreground truncate max-w-[150px]">{c.assigned_lawyer.name}</span>
+                                <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider mt-0.5">{c.assigned_lawyer.role}</span>
+                              </div>
                             </div>
                           ) : (
                             <span className="italic text-muted-foreground/45 text-xs">Unassigned</span>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="py-5 px-5">
                           {c.next_hearing_date ? (
-                            <div className="flex items-center space-x-1.5">
-                              <Calendar size={14} className="text-muted-foreground/60" />
-                              <span className={`text-sm ${hasOverdueHearing ? 'text-rose-500 font-bold' : 'text-muted-foreground'}`}>
-                                {c.next_hearing_date}
-                              </span>
-                              {hasOverdueHearing && (
-                                <span title="Overdue Hearing Date">
-                                  <AlertCircle size={14} className="text-rose-500" />
+                            <div className="flex items-center space-x-2">
+                              <Calendar size={14} className={hasOverdueHearing ? 'text-rose-500' : 'text-muted-foreground/80'} />
+                              <div className="flex flex-col min-w-0">
+                                <span className={`text-xs font-bold ${hasOverdueHearing ? 'text-rose-500 font-extrabold' : 'text-muted-foreground'}`}>
+                                  {c.next_hearing_date}
                                 </span>
-                              )}
+                                {hasOverdueHearing && (
+                                  <span className="text-[9px] font-black text-rose-500 uppercase tracking-wider flex items-center space-x-0.5 mt-0.5 animate-pulse">
+                                    <AlertCircle size={10} />
+                                    <span>Overdue</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <span className="italic text-[11px] text-muted-foreground/45">No dates</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right overflow-visible" onClick={e => e.stopPropagation()}>
+                        <TableCell className="py-5 px-5 text-right overflow-visible" onClick={e => e.stopPropagation()}>
                           <div className="relative inline-block text-left">
                             <Button
                               variant="ghost"
