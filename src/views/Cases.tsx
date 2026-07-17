@@ -382,14 +382,9 @@ export const Cases: React.FC = () => {
                         </TableCell>
                         <TableCell className="py-5 px-5 text-foreground font-semibold text-xs">
                           {c.assigned_lawyer ? (
-                            <div className="flex items-center space-x-2">
-                              <div className="w-6.5 h-6.5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-black uppercase border border-primary/20 flex-shrink-0">
-                                {c.assigned_lawyer.name.split(' ').filter(Boolean).map(n => n[0]).join('')}
-                              </div>
-                              <div className="flex flex-col min-w-0">
-                                <span className="text-xs font-extrabold text-foreground truncate max-w-[150px]">{c.assigned_lawyer.name}</span>
-                                <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider mt-0.5">{c.assigned_lawyer.role}</span>
-                              </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs font-extrabold text-foreground truncate max-w-[170px]">{c.assigned_lawyer.name}</span>
+                              <span className="text-[9px] text-muted-foreground font-black uppercase tracking-wider mt-0.5">{c.assigned_lawyer.role}</span>
                             </div>
                           ) : (
                             <span className="italic text-muted-foreground/45 text-xs">Unassigned</span>
