@@ -18,7 +18,6 @@ export const Login: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showGoogleButton, setShowGoogleButton] = useState(true);
 
   // Destination route after login
   const from = (location.state as any)?.from?.pathname || '/';
