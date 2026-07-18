@@ -4,6 +4,29 @@
 @config "../tailwind.config.js";
 
 @layer base {
+  html,
+  body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  #root {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  @media (max-width: 640px) {
+    html,
+    body,
+    #root {
+      overflow: auto;
+    }
+  }
+
   :root {
     --background: 210 40% 98%;
     --foreground: 224 71.4% 4.1%;
